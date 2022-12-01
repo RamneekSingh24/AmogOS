@@ -6,10 +6,10 @@ typedef unsigned int DISK_TYPE;
 
 // Real physical hard disk
 #define DISK_TYPE_REAL 0
+#define DISK_VIRTIO 1
 
 struct disk
 {
-
     DISK_TYPE type;
     int sector_size;
 };

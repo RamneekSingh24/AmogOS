@@ -74,7 +74,23 @@ void kernel_main() {
     enable_paging();
 
 
+
     enable_interrupts();
+
+    print("\nola\n");
+    
+    
+
+    int k = 0;
+    int x = 1 / k;
+
+    char* c = "hello\n";
+
+    if (x == 1) {
+        c = "world\n";
+    }
+
+    print(c);
 
 
 
