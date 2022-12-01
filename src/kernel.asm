@@ -36,5 +36,5 @@ _start:
 
 
 
-
-times 512-($-$$) db 0
+; alignment needed for C code that follows
+times 512-($-$$) db 0 
