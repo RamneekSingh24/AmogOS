@@ -2,8 +2,12 @@
 #include "config.h"
 #include "memory/memory.h"
 #include "console/console.h"
+#include "io/io.h"
 
 extern void idt_load(struct idt_ptr* ptr);
+extern void int0h();
+extern void int21h();
+extern void int_generic_h();
 
 
 struct idt_entry idt[NUM_INTERRUPTS];
@@ -12,6 +16,15 @@ struct idt_ptr idtp;
 
 void intr_0_handler() {
     print("Divide by zero exception\n");
+}
+
+void intr_21_handler() {
+    print("Keyboard pressed\n");
+    port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
+}
+
+void intr_generic_handler() {
+    port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
 }
 
 
@@ -37,7 +50,12 @@ void idt_init() {
     idtp.base = (uint32_t) &idt;
 
 
-    idt_set(0, intr_0_handler);
+    for (int i = 0; i < NUM_INTERRUPTS; i++) {
+        idt_set(i, int_generic_h);
+    }
+
+    idt_set(0, int0h);
+    idt_set(0x21, int21h);
 
     idt_load(&idtp);
 
@@ -56,6 +74,15 @@ static void test_div_by_zero() {
 static void test_div_by_zero_int0() {
     test_int0();
 }
+
+
+extern void enable_interrupts();
+
+void external_interrupts_test() {
+    enable_interrupts();   
+    idt_set(0x20, int21h);
+}
+
 
 void idt_test() {
     test_div_by_zero_int0();

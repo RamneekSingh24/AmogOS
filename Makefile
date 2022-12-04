@@ -1,4 +1,8 @@
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/console/console.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o
+FILES = ./build/kernel.asm.o ./build/kernel.o 
+FILES += ./build/console/console.o 
+FILES += ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o
+FILES += ./build/io/io.asm.o ./build/io/io.o
+
 # ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
@@ -44,6 +48,9 @@ make qemu:
 
 ./build/io/io.asm.o: ./src/io/io.asm
 	nasm -f elf -g ./src/io/io.asm -o ./build/io/io.asm.o
+
+./build/io/io.o: ./src/io/io.c
+	i686-elf-gcc ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/io/io.c -o ./build/io/io.o
 
 ./build/memory/heap/heap.o: ./src/memory/heap/heap.c
 	i686-elf-gcc -I./src/memory/heap ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/memory/heap/heap.c -o ./build/memory/heap/heap.o

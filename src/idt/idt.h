@@ -22,6 +22,6 @@ struct idt_ptr {
 
 void idt_test();
 void idt_init();
-
+void external_interrupts_test();
 
 #endif
