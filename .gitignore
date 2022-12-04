@@ -1,8 +1,6 @@
 .gdb_history
 .vscode
 
-build
-build/*
 bin/*
 bin
 bs=512
