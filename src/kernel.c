@@ -81,16 +81,16 @@ void kernel_main() {
     
     
 
-    int k = 0;
-    int x = 1 / k;
+    // int k = 0;
+    // int x = 1 / k;
 
-    char* c = "hello\n";
+    // char* c = "hello\n";
 
-    if (x == 1) {
-        c = "world\n";
-    }
+    // if (x == 1) {
+    //     c = "world\n";
+    // }
 
-    print(c);
+    // print(c);
 
 
 
