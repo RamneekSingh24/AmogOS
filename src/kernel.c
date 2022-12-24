@@ -5,6 +5,7 @@
 #include "io/io.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
+#include "fs/utils.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -22,10 +23,13 @@ void kernel_main() {
     disk_init();
     idt_init();
 
-    print("\n");
-    print("bb");
-    print("cc");
-
+    // print("\n");
+    // print("bb");
+    // print("cc");
+    // print("\n");
+    // println("");
+    
+    // test_fs_utils();
     // test_paging_set();
     // kheap_test();
     // console_test();

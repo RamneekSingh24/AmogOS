@@ -12,4 +12,6 @@
 
 #define DISK_SECTOR_SIZE 512
 
+#define FS_MAX_PATH_LEN 108
+
 #endif

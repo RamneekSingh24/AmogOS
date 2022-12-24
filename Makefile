@@ -5,6 +5,8 @@ FILES += ./build/io/io.asm.o ./build/io/io.o
 FILES += ./build/memory/heap/kheap.o 
 FILES += ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o
 FILES += ./build/disk/disk.o
+FILES += ./build/fs/utils.o
+FILES += ./build/lib/string/string.o
 
 # ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
@@ -76,6 +78,12 @@ make qemu:
 ./build/disk/disk.o: ./src/disk/disk.c
 	i686-elf-gcc -I./src/disk ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/disk/disk.c -o ./build/disk/disk.o
 
+
+./build/fs/utils.o: ./src/fs/utils.c
+	i686-elf-gcc -I./src/fs ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/fs/utils.c -o ./build/fs/utils.o
+
+./build/lib/string/string.o: ./src/lib/string/string.c
+	i686-elf-gcc -I./src/lib/string ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/lib/string/string.c -o ./build/lib/string/string.o
 
 
 

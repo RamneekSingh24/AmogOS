@@ -86,4 +86,6 @@ int kheap_init();
 
 void kheap_test();
 
+int kheap_num_free_blocks();
+
 #endif
