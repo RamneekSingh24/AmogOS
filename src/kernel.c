@@ -16,29 +16,24 @@ void console_test() {
 void kernel_main() {
 
     console_init();
-
-    console_test();
-
     kheap_init();
-
     idt_init();
+    kpaging_init();
 
+    // print("\n");
+    // print("bb");
+    // print("cc");
+
+    // test_paging_set();
+    // kheap_test();
+    // console_test();
     // idt_test();
     // io_test();
 
     // interrupts disabled on here
-
     // external_interrupts_test:
     // enables interrupts and maps keyboard handler to timer interrupt handler
     // should see keyboard pressed again and again due to timer interrupt
     // external_interrupts_test();
-
-    kpaging_init();
-    test_paging_set();
-
-    kheap_test();
-
-    print("\n");
-    print("bb");
-    print("cc");
+    // ^^ enables interrupts
 }
