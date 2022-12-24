@@ -3,3 +3,7 @@
 
 bin/*
 bin
+bs=512
+*.o
+build/*.o
+build/*/*.o

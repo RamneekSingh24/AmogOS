@@ -1,43 +1,59 @@
 section .asm
 
 
+global port_io_input_byte
+global port_io_input_word
+global port_io_out_byte
+global port_io_out_word
 
 
-global in_byte, in_word, out_byte, out_word
-
-
-in_byte:
+port_io_input_byte:
     push ebp
-    mov ebp, esp
-    xor eax, eax  
-    mov edx, [ebp+8]
-    in al, dx
+    mov  ebp, esp
+    
+    mov edx, [ebp +  8] ; port from argument
+    xor eax, eax   ; setup return value
+
+    in al, dx      ; lower 8 bits of eax set by in instruction
+    
     pop ebp
     ret
 
-in_word:
+
+port_io_input_word:
     push ebp
     mov ebp, esp
+
+    mov edx, [ebp +  8]
     xor eax, eax
-    mov edx, [ebp+8]
+
     in ax, dx
+
     pop ebp
     ret
 
-out_byte:
+
+port_io_out_byte:
     push ebp
     mov ebp, esp
-    mov eax, [ebp+12]
-    mov edx, [ebp+8]
+
+    mov edx, [ebp + 8] ; port
+    mov eax, [ebp + 12] ; data
+    
     out dx, al
+
     pop ebp
     ret
 
-out_word:
+
+port_io_out_word:
     push ebp
     mov ebp, esp
-    mov eax, [ebp+12]
-    mov edx, [ebp+8]
+
+    mov edx, [ebp + 8] ; port
+    mov eax, [ebp + 12] ; data
+
     out dx, ax
+
     pop ebp
     ret

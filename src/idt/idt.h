@@ -3,25 +3,24 @@
 
 #include <stdint.h>
 
+// Interrupt Descriptor Table Entry
+struct idt_entry {
+    uint16_t base_lo; // The lower 16 bits of the address to jump to when this
+                      // interrupt fires.
+    uint16_t sel;     // Kernel segment selector.
+    uint8_t always0;  // This must always be zero.
+    uint8_t flags;    // Descriptor type and attributes.
+    uint16_t base_hi; // The upper 16 bits of the address to jump to.
+} __attribute__((packed));
 
-struct idt_desc {
-    uint16_t offset_1;
-    uint16_t selector;
-    uint8_t zero;
-    uint8_t type_attr;
-    uint16_t offset_2;
+// Interrupt Descriptor Table Pointer
+struct idt_ptr {
+    uint16_t limit; // Size of IDT - 1
+    uint32_t base;  // Base addr of the start of IDT
+} __attribute__((packed));
 
-}__attribute__((packed));
-
-
-struct idtr_desc {
-    uint16_t limit;
-    uint32_t base;
-}__attribute__((packed));
-
+void idt_test();
 void idt_init();
-
-void enable_interrupts();
-void disable_interrupts();
+void external_interrupts_test();
 
 #endif

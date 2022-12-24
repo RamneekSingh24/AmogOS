@@ -1,64 +1,100 @@
 #include "idt.h"
 #include "config.h"
-#include "memory/memory.h"
-#include "kernel.h"
+#include "console/console.h"
 #include "io/io.h"
+#include "memory/memory.h"
 
-
-struct idt_desc idt_descriptors[TOTAL_INTERRUPTS];
-struct idtr_desc idtr_descriptor;
-
-extern void idt_load(struct idtr_desc* ptr);
+extern void idt_load(struct idt_ptr *ptr);
+extern void int0h();
 extern void int21h();
-extern void no_interrupt();
+extern void int_generic_h();
+extern void enable_interrupts();
+extern void disable_interrupts();
 
-void int21h_handler() {
-    print("keyboard pressed \n");
-    out_byte(0x20, 0x20);
+struct idt_entry idt[NUM_INTERRUPTS];
+struct idt_ptr idtp;
+
+int cli_count;
+
+void pop_cli() {
+    if (cli_count <= 0) {
+        println("error pop cli with count already <= 0");
+    } else {
+        cli_count--;
+        if (cli_count == 0)
+            disable_interrupts();
+    }
 }
 
-
-void idt_set(int intr_no, void* address) {
-    struct idt_desc* desc = &idt_descriptors[intr_no];
-    desc->offset_1 = (uint32_t) address & 0x0000ffff;
-    desc->offset_2 = (uint32_t) address >> 16;
-    desc->selector = CODE_SELECTOR;
-    desc->zero = 0x00;
-    desc->type_attr = 0xEE; // 0b1110 -> interrupt gate
-                            // storage seg = 0
-                            // DPL = 3
+void push_cli() {
+    if (cli_count < 0) {
+        println("error push cli with count < 0");
+    } else {
+        cli_count++;
+        if (cli_count == 1)
+            enable_interrupts();
+    }
 }
 
-void idt_zero() {
-    print("Divide by zero error\n");
+void intr_0_handler() { print("Divide by zero exception\n"); }
+
+void intr_21_handler() {
+    print("Keyboard pressed\n");
+    port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
 }
 
-
-
-// IRQ0 = INT20
-void idt_timer() {
-
+void intr_generic_handler() {
+    port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
 }
 
-void no_interrupt_handler() {
-    out_byte(0x20, 0x20);
-}
+void idt_set(int intr_num, void *addr) {
+    struct idt_entry *entry = &idt[intr_num];
+    entry->base_lo = (uint32_t)addr & 0x0000FFFF;
+    entry->sel = KERNEL_CODE_SEGMENT;
+    entry->always0 = 0;
 
+    // last E -> interrupt gate
+    // first E -> 1110 -> Present (1) (Set), DPL(11) (ring 3), S (0) (interrupt
+    // gate)
+    entry->flags = 0xEE;
+
+    entry->base_hi = ((uint32_t)addr & 0xFFFF0000) >> 16;
+}
 
 void idt_init() {
-    memset(idt_descriptors, 0, sizeof(idt_descriptors));
-    idtr_descriptor.limit = sizeof(idt_descriptors) - 1;
-    idtr_descriptor.base = (uint32_t) idt_descriptors;
-    
-    for (int i = 0; i < TOTAL_INTERRUPTS; i++) {
-        idt_set(i, no_interrupt);
+
+    memset(&idt, 0, sizeof(idt));
+    idtp.limit = sizeof(idt) - 1;
+    idtp.base = (uint32_t)&idt;
+
+    cli_count = 0;
+
+    for (int i = 0; i < NUM_INTERRUPTS; i++) {
+        idt_set(i, int_generic_h);
     }
 
-    idt_set(0, idt_zero);
+    idt_set(0, int0h);
     idt_set(0x21, int21h);
-    
-    idt_load(&idtr_descriptor);
 
+    idt_load(&idtp);
 }
 
+// --------- TESTS ------------- //
 
+extern void test_int0();
+extern void test_div0();
+
+static void test_div_by_zero() { test_div0(); }
+
+static void test_div_by_zero_int0() { test_int0(); }
+
+void external_interrupts_test() {
+    enable_interrupts();
+    idt_set(0x20, int21h);
+}
+
+void idt_test() {
+    test_div_by_zero_int0();
+    test_div_by_zero();
+    test_div_by_zero_int0();
+}

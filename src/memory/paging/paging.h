@@ -1,44 +1,33 @@
 #ifndef PAGING_H
 #define PAGING_H
 
-#include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
-/* Masks for toggling Page Table Entry bits */
-#define PAGE_CACHE_DISABLE     0b00010000
-#define PAGE_WRITE_THROUGH     0b00001000
-#define PAGE_ACCESS_FROM_ALL   0b00000100   // Page accessible from user space
-#define PAGE_WRITEABLE         0b00000010
-#define PAGING_ENABLED         0b00000001
+#define PAGE_SIZE 4096
+#define PAGE_CACHE_DISABLED 0b00010000      // Page won't be cached
+#define PAGE_CACHE_WRITE_THROUGH 0b00001000 // Page won't be cached
+#define PAGE_USER_ACCESS_ALLOW                                                 \
+    0b00000100                      // Page can be accessed in all ring levels
+#define PAGE_WRITE_ALLOW 0b00000010 // Page can be written to
+#define PAGE_PRESENT 0b00000001     // Page is present
 
+#define PAGE_FRAME_NUM_MASK 0xFFFFF000
 
-#define PAGING_TOTAL_ENTRIES_PER_TABLE 1024
-#define PAGING_PAGE_SZ 4096
+#define NUM_PAGE_TABLE_ENTRIES 1024
 
-// Two level paging
-struct page_table_directory {
-    uint32_t* page_tables;
+typedef uint32_t page_table_entry;
+
+struct page_table_32b {
+    page_table_entry *cr3;
+    int num_levels; // 1 for large pages(4 MB), 2 for normal 4KB in 32 bit mode.
 };
 
+void kpaging_init();
 
+void paging_switch(struct page_table_32b *pt);
 
-struct page_table_directory* create_paging_dir (uint8_t flags);
-void paging_switch(uint32_t* dir);
-uint32_t* get_page_tables(struct page_table_directory* dir);
+void test_paging_set();
 
-
-// Warning--
-// Create page_table_dir and switch to a page table
-// and then call enable paging to avoid panics
-void enable_paging();
-
-
-int set_page_table_entry(uint32_t* dir, void* virtual_addr, uint32_t val);
-
-int get_indexes(void* virtual_address, uint32_t* page_table_index, 
-                        uint32_t* page_table_entry_index);
-
-
-
-
-#endif 
+#endif

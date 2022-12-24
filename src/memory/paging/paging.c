@@ -1,89 +1,87 @@
 #include "paging.h"
+#include "config.h"
+#include "console/console.h"
 #include "memory/heap/kheap.h"
-#include <stdbool.h>
 #include "status.h"
 
-void paging_load_directory(uint32_t* dir);
+struct page_table_32b kpage_table;
 
-static uint32_t* current_directory = 0;
+struct page_table_32b *current_pt[N_CPU_MAX];
 
-struct page_table_directory* create_paging_dir (uint8_t flags) {
+extern void paging_load_dir(uint32_t *cr3);
+extern void paging_enable();
 
-    uint32_t* directory = kzmalloc(PAGING_TOTAL_ENTRIES_PER_TABLE * sizeof(uint32_t));
-    
+void kpaging_create(uint8_t flags, struct page_table_32b *page_table) {
+    page_table_entry *pt_dir =
+        kzalloc(sizeof(page_table_entry) * NUM_PAGE_TABLE_ENTRIES);
     int offset = 0;
-
-    // 1024 page tables each with 1024 entries
-    // each entry is 4KB page
-
-    for (int i = 0; i < PAGING_TOTAL_ENTRIES_PER_TABLE; i++) {
-
-        uint32_t* page_table = kzmalloc(PAGING_TOTAL_ENTRIES_PER_TABLE * sizeof(uint32_t));
-        
-        for (int j = 0; j < PAGING_TOTAL_ENTRIES_PER_TABLE; j++) {
-            page_table[j] = (offset + (j * PAGING_PAGE_SZ) ) | flags;
+    for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+        page_table_entry *pt_i =
+            kzalloc(sizeof(page_table_entry) * NUM_PAGE_TABLE_ENTRIES);
+        for (int j = 0; j < NUM_PAGE_TABLE_ENTRIES; j++) {
+            pt_i[j] = (offset + j * PAGE_SIZE) | flags;
         }
 
-        offset += PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SZ;
-        directory[i] = (uint32_t) page_table | flags | PAGE_WRITEABLE;
-        // All pages table entries in the directory[i] are writeable
+        offset += PAGE_SIZE * NUM_PAGE_TABLE_ENTRIES;
+        uint32_t pt_i_frame_num = (uint32_t)(pt_i) / PAGE_SIZE;
+        pt_dir[i] = (pt_i_frame_num * PAGE_SIZE) | flags | PAGE_WRITE_ALLOW;
     }
 
-    struct page_table_directory* dir = kzmalloc(sizeof(struct page_table_directory));
-    dir->page_tables = directory;
-
-    return dir;
-
+    page_table->cr3 = pt_dir;
+    page_table->num_levels = 2;
 }
 
-void paging_switch(uint32_t* dir) {
-    paging_load_directory(dir);
-    current_directory = dir;
+void paging_switch(struct page_table_32b *pt) {
+    // int cpu = get_cpu_id();
+    int cpu = 0;
+
+    paging_load_dir(pt->cr3);
+
+    current_pt[cpu] = pt;
 }
 
-
-uint32_t* get_page_tables(struct page_table_directory* dir) {
-    return dir->page_tables;
+void kpaging_init() {
+    kpaging_create(PAGE_PRESENT | PAGE_WRITE_ALLOW, &kpage_table);
+    paging_switch(&kpage_table);
+    paging_enable();
 }
 
-bool is_aligned(void* addr) {
-    return ((uint32_t) addr % PAGING_PAGE_SZ) == 0;
-}
+bool is_page_aligned(uint32_t addr) { return (addr & (PAGE_SIZE - 1)) == 0; }
 
-
-
-int get_indexes(void* virtual_address, uint32_t* page_table_index, 
-                        uint32_t* page_table_entry_index) {
-
-    int res = 0;
-    if (!is_aligned(virtual_address)) {
-        res = -STATUS_INVALID_ARG;
-        return res;
-    }
-
-    *page_table_index = ((uint32_t) virtual_address / (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SZ));
-    *page_table_entry_index = ((uint32_t) virtual_address % (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SZ) / PAGING_PAGE_SZ);
-
-
-    return res;  
-}
-
-
-
-int set_page_table_entry(uint32_t* dir, void* virtual_addr, uint32_t val) {
-    if (!is_aligned(virtual_addr)) {
+int paging_map_page(struct page_table_32b *pt, uint32_t virt_addr,
+                    uint32_t phys_addr, uint8_t flags) {
+    if (pt->num_levels != 2) {
         return -STATUS_INVALID_ARG;
     }
-    uint32_t page_tabe_idx = 0;
-    uint32_t page_table_entry_idx = 0;
-    int res = get_indexes(virtual_addr, &page_tabe_idx, &page_table_entry_idx);
-    if (res < 0) {
-        return res;
+
+    if (!is_page_aligned(virt_addr) || !is_page_aligned(phys_addr)) {
+        return -STATUS_INVALID_ARG;
     }
 
-    uint32_t* table  = (uint32_t*)(dir[page_tabe_idx] & 0xfffff000);
+    uint32_t *pt_dir = pt->cr3;
+    uint32_t pt_dir_index = virt_addr / (PAGE_SIZE * NUM_PAGE_TABLE_ENTRIES);
+    uint32_t pt_index =
+        (virt_addr % (PAGE_SIZE * NUM_PAGE_TABLE_ENTRIES)) / PAGE_SIZE;
 
-    table[page_table_entry_idx] = val;
+    uint32_t *pt_i = (uint32_t *)(pt_dir[pt_dir_index] & PAGE_FRAME_NUM_MASK);
+    pt_i[pt_index] = phys_addr | flags;
 
-    return res;
+    return 0;
+}
+
+// -------------------- Tests -------------------- //
+
+void test_paging_set() {
+    int *ptr_pa = (int *)kzalloc(4096);
+    paging_map_page(&kpage_table, (uint32_t)0x1000, (uint32_t)ptr_pa,
+                    PAGE_PRESENT | PAGE_WRITE_ALLOW);
+    int *ptr_va = (int *)(0x1000);
+    *ptr_va = 198913;
+
+    if (*ptr_pa != 198913) {
+        println("paging map fail..");
+    } else {
+        println("paging map pass..");
+        print_int(*ptr_pa);
+    }
 }

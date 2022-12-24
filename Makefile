@@ -1,12 +1,29 @@
-FILES = ./build/kernel.asm.o ./build/kernel.o ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
+FILES = ./build/kernel.asm.o ./build/kernel.o 
+FILES += ./build/console/console.o 
+FILES += ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o
+FILES += ./build/io/io.asm.o ./build/io/io.o
+FILES += ./build/memory/heap/kheap.o 
+FILES += ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o
+
+# ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
+
+build: ${FILES}
+	./build.sh
+
+format:
+	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
 
 all: ./bin/boot.bin ./bin/kernel.bin
 	rm -rf ./bin/os.bin
 	dd if=./bin/boot.bin >> ./bin/os.bin
 	dd if=./bin/kernel.bin >> ./bin/os.bin
 	dd if=/dev/zero >> bs=512 count=100 >> ./bin/os.bin
+
+make qemu: 
+	./build.sh
+	qemu-system-i386 -hda ./bin/os.bin
 
 
 ./bin/kernel.bin: $(FILES)
@@ -24,6 +41,9 @@ all: ./bin/boot.bin ./bin/kernel.bin
 	i686-elf-gcc ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/kernel.c -o ./build/kernel.o
 
 
+./build/console/console.o: ./src/console/console.c
+	i686-elf-gcc ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/console/console.c -o ./build/console/console.o
+
 ./build/idt/idt.asm.o: ./src/idt/idt.asm
 	nasm -f elf -g ./src/idt/idt.asm -o ./build/idt/idt.asm.o
 
@@ -37,15 +57,16 @@ all: ./bin/boot.bin ./bin/kernel.bin
 ./build/io/io.asm.o: ./src/io/io.asm
 	nasm -f elf -g ./src/io/io.asm -o ./build/io/io.asm.o
 
-./build/memory/heap/heap.o: ./src/memory/heap/heap.c
-	i686-elf-gcc -I./src/memory/heap ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/memory/heap/heap.c -o ./build/memory/heap/heap.o
+./build/io/io.o: ./src/io/io.c
+	i686-elf-gcc ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/io/io.c -o ./build/io/io.o
+
 
 ./build/memory/heap/kheap.o: ./src/memory/heap/kheap.c
 	i686-elf-gcc -I./src/memory/heap ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/memory/heap/kheap.c -o ./build/memory/heap/kheap.o
 
+
 ./build/memory/paging/paging.o: ./src/memory/paging/paging.c
 	i686-elf-gcc -I./src/memory/paging ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/memory/paging/paging.c -o ./build/memory/paging/paging.o
-
 
 ./build/memory/paging/paging.asm.o: ./src/memory/paging/paging.asm
 	nasm -f elf -g ./src/memory/paging/paging.asm -o ./build/memory/paging/paging.asm.o

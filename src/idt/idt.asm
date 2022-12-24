@@ -1,42 +1,83 @@
 section .asm
 
-global idt_load, int21h, enable_interrupts, disable_interrupts
-global no_interrupt
+extern intr_0_handler
+extern intr_21_handler
+extern intr_generic_handler
 
-extern int21h_handler,no_interrupt_handler 
+global int0h, int21h, int_generic_h
+global enable_interrupts, disable_interrupts
 
-idt_load:
-    push ebp
+
+global idt_load, test_int0, test_div0
+
+
+
+idt_load:         ; first argument idtr_ptr
+    push ebp      ; Calling conventions for compatibility with C
     mov ebp, esp
-    mov ebx, [ebp+8]
+
+    mov ebx, [ebp + 8] ; First argument
     lidt [ebx]
+
     pop ebp
     ret
 
 
+; Interrupt wrappers 
+
+int0h:
+    cli    ; disable interrupts to prevent nested interrupts
+
+    pushad ; save all general purpose registers
+    call intr_0_handler
+    popad  ; restore gp registers 
+    
+    sti
+    iret   ; special instruction to return from interrupt and go back to where we were 
+
+
+
+
 int21h:
-    cli
-    pushad
-    call int21h_handler
-    popad
+    cli    ; disable interrupts to prevent nested interrupts
+
+    pushad ; save all general purpose registers
+    call intr_21_handler
+    popad  ; restore gp registers 
+    
     sti
-    iret
+    iret   ; special instruction to return from interrupt and go back to where we were 
 
 
+; A generic interupt handler
+int_generic_h:
 
-enable_interrupts:
+    cli    ; disable interrupts to prevent nested interrupts
+
+    pushad ; save all general purpose registers
+    call intr_generic_handler
+    popad  ; restore gp registers 
+    
     sti
-    ret
+    iret   ; special instruction to return from interrupt and go back to where we were 
+
 
 disable_interrupts:
     cli
     ret
 
-
-no_interrupt:
-    cli
-    pushad
-    call no_interrupt_handler
-    popad
+enable_interrupts:
     sti
-    iret
+    ret
+
+
+
+test_int0:
+    int 0
+    ret
+
+test_div0:
+    mov eax, 0
+    div eax
+    ret
+

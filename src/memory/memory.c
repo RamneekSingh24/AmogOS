@@ -1,9 +1,9 @@
 #include "memory.h"
 
-void* memset(void* ptr, char c, size_t size) {
-    char* itr = (char*) ptr;
-    for (size_t i = 0; i < size; i++) {
-        itr[i] = c;
+void *memset(void *ptr, unsigned char c, size_t num) {
+    unsigned char *p = (unsigned char *)ptr;
+    for (int i = 0; i < num; i++) {
+        p[i] = c;
     }
     return ptr;
 }

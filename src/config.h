@@ -1,13 +1,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define TOTAL_INTERRUPTS 512
-#define CODE_SELECTOR 0x08
-#define DATA_SELECTOR 0x10
-#define HEAP_SIZE_BYTES 104857600 // 100 MB
-#define HEAP_BLOCK_SZ 4096
-#define HEAP_START 0x01000000
-#define HEAP_TABLE_ADDR 0x00007E00
+#define NUM_INTERRUPTS 512       // 512 interrupts supported by intel's i386
+#define KERNEL_CODE_SEGMENT 0x08 // 0x08 is the code segment for the kernel
+#define KERNEL_DATA_SEGMENT 0x10 // 0x10 is the data segment for the kernel
 
-#define DISK_SECTOR_SZ 512
+#define MASTER_PIC_PORT 0x20
+#define MASTER_PIC_INTR_ACK 0x20
+
+#define N_CPU_MAX 32
+
 #endif
