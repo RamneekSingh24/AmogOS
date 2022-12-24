@@ -192,7 +192,6 @@ int kheap_num_free_blocks() {
     return num_free;
 }
 
-
 // ----------------------- tests ------------------- //
 
 void kheap_test() {

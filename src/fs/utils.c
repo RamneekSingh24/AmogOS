@@ -1,9 +1,9 @@
 #include "utils.h"
 #include "config.h"
+#include "console/console.h"
 #include "lib/string/string.h"
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
-#include "console/console.h"
 #include "status.h"
 
 static bool is_path_valid(const char *path) {
@@ -57,9 +57,7 @@ void free_path(struct path_t *path) {
     kfree(path);
 }
 
-
 // -----  tests ------------- //
-
 
 void test_parse_path() {
     print("\n at start: ");
@@ -127,7 +125,7 @@ void test_parse_path() {
         print("root next next next is not NULL");
         return;
     }
-    
+
     free_path(path);
     print("\n at end: ");
     print_int(kheap_num_free_blocks());
@@ -135,7 +133,4 @@ void test_parse_path() {
     print("test_parse_path passed");
 }
 
-
-void test_fs_utils() {
-    test_parse_path();
-}
+void test_fs_utils() { test_parse_path(); }

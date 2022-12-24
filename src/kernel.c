@@ -2,11 +2,11 @@
 #include "console/console.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
+#include "fs/utils.h"
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
-#include "fs/utils.h"
 
 #include <stddef.h>
 #include <stdint.h>

@@ -16,5 +16,4 @@ void disk_stream_close(struct disk_stream *stream);
 
 void disk_streamer_test();
 
-
 #endif
