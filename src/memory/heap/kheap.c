@@ -180,3 +180,16 @@ void *kzalloc(size_t size) {
     memset(ptr, 0x0, size);
     return ptr;
 }
+
+// ----------------------- tests ------------------- //
+
+void kheap_test() {
+    void *ptr = kmalloc(50);
+    void *ptr2 = kmalloc(5000);
+    void *ptr3 = kmalloc(5300);
+    kfree(ptr2);
+    void *ptr4 = kmalloc(15000);
+
+    if (ptr || ptr2 || ptr3 || ptr4) {
+    };
+}

@@ -1,6 +1,7 @@
 #ifndef PAGING_H
 #define PAGING_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -11,6 +12,8 @@
     0b00000100                      // Page can be accessed in all ring levels
 #define PAGE_WRITE_ALLOW 0b00000010 // Page can be written to
 #define PAGE_PRESENT 0b00000001     // Page is present
+
+#define PAGE_FRAME_NUM_MASK 0xFFFFF000
 
 #define NUM_PAGE_TABLE_ENTRIES 1024
 
@@ -24,5 +27,7 @@ struct page_table_32b {
 void kpaging_init();
 
 void paging_switch(struct page_table_32b *pt);
+
+void test_paging_set();
 
 #endif

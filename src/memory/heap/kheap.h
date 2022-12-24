@@ -84,4 +84,6 @@ int kfree(void *ptr);
 
 int kheap_init();
 
+void kheap_test();
+
 #endif

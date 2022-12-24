@@ -1,6 +1,8 @@
 #include "paging.h"
 #include "config.h"
+#include "console/console.h"
 #include "memory/heap/kheap.h"
+#include "status.h"
 
 struct page_table_32b kpage_table;
 
@@ -42,4 +44,44 @@ void kpaging_init() {
     kpaging_create(PAGE_PRESENT | PAGE_WRITE_ALLOW, &kpage_table);
     paging_switch(&kpage_table);
     paging_enable();
+}
+
+bool is_page_aligned(uint32_t addr) { return (addr & (PAGE_SIZE - 1)) == 0; }
+
+int paging_map_page(struct page_table_32b *pt, uint32_t virt_addr,
+                    uint32_t phys_addr, uint8_t flags) {
+    if (pt->num_levels != 2) {
+        return -STATUS_INVALID_ARG;
+    }
+
+    if (!is_page_aligned(virt_addr) || !is_page_aligned(phys_addr)) {
+        return -STATUS_INVALID_ARG;
+    }
+
+    uint32_t *pt_dir = pt->cr3;
+    uint32_t pt_dir_index = virt_addr / (PAGE_SIZE * NUM_PAGE_TABLE_ENTRIES);
+    uint32_t pt_index =
+        (virt_addr % (PAGE_SIZE * NUM_PAGE_TABLE_ENTRIES)) / PAGE_SIZE;
+
+    uint32_t *pt_i = (uint32_t *)(pt_dir[pt_dir_index] & PAGE_FRAME_NUM_MASK);
+    pt_i[pt_index] = phys_addr | flags;
+
+    return 0;
+}
+
+// -------------------- Tests -------------------- //
+
+void test_paging_set() {
+    int *ptr_pa = (int *)kzalloc(4096);
+    paging_map_page(&kpage_table, (uint32_t)0x1000, (uint32_t)ptr_pa,
+                    PAGE_PRESENT | PAGE_WRITE_ALLOW);
+    int *ptr_va = (int *)(0x1000);
+    *ptr_va = 198913;
+
+    if (*ptr_pa != 198913) {
+        println("paging map fail..");
+    } else {
+        println("paging map pass..");
+        print_int(*ptr_pa);
+    }
 }

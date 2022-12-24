@@ -24,7 +24,6 @@ void kernel_main() {
     idt_init();
 
     // idt_test();
-
     // io_test();
 
     // interrupts disabled on here
@@ -33,18 +32,13 @@ void kernel_main() {
     // enables interrupts and maps keyboard handler to timer interrupt handler
     // should see keyboard pressed again and again due to timer interrupt
     // external_interrupts_test();
+
     kpaging_init();
+    test_paging_set();
 
-    void *ptr = kmalloc(50);
-    void *ptr2 = kmalloc(5000);
-    void *ptr3 = kmalloc(5300);
-    kfree(ptr2);
-    void *ptr4 = kmalloc(15000);
+    kheap_test();
 
-    if (ptr || ptr2 || ptr3 || ptr4) {
-    };
-
-    // print_int((int)ptr4);
-
+    print("\n");
     print("bb");
+    print("cc");
 }
