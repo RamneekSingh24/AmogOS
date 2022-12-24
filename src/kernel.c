@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "console/console.h"
+#include "disk/disk.h"
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/heap/kheap.h"
@@ -17,12 +18,13 @@ void kernel_main() {
 
     console_init();
     kheap_init();
-    idt_init();
     kpaging_init();
+    disk_init();
+    idt_init();
 
-    // print("\n");
-    // print("bb");
-    // print("cc");
+    print("\n");
+    print("bb");
+    print("cc");
 
     // test_paging_set();
     // kheap_test();

@@ -4,6 +4,7 @@ FILES += ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o
 FILES += ./build/io/io.asm.o ./build/io/io.o
 FILES += ./build/memory/heap/kheap.o 
 FILES += ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o
+FILES += ./build/disk/disk.o
 
 # ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
