@@ -3,6 +3,7 @@ FILES += ./build/console/console.o
 FILES += ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o
 FILES += ./build/io/io.asm.o ./build/io/io.o
 FILES += ./build/memory/heap/kheap.o 
+FILES += ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o
 
 # ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
@@ -10,6 +11,9 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign
 
 build: ${FILES}
 	./build.sh
+
+format:
+	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
 
 all: ./bin/boot.bin ./bin/kernel.bin
 	rm -rf ./bin/os.bin
@@ -60,9 +64,9 @@ make qemu:
 ./build/memory/heap/kheap.o: ./src/memory/heap/kheap.c
 	i686-elf-gcc -I./src/memory/heap ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/memory/heap/kheap.c -o ./build/memory/heap/kheap.o
 
+
 ./build/memory/paging/paging.o: ./src/memory/paging/paging.c
 	i686-elf-gcc -I./src/memory/paging ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/memory/paging/paging.c -o ./build/memory/paging/paging.o
-
 
 ./build/memory/paging/paging.asm.o: ./src/memory/paging/paging.asm
 	nasm -f elf -g ./src/memory/paging/paging.asm -o ./build/memory/paging/paging.asm.o
