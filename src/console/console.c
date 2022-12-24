@@ -48,6 +48,12 @@ void print(char* str) {
     }
 }
 
+
+void println(char* str) {
+    print(str);
+    print("\n");
+}
+
 void print_int(int x) {
     if (x < 0) {
         print("-");
@@ -55,14 +61,25 @@ void print_int(int x) {
     }
     int cx  = x;
     int num_digits = 0;
+
     while(x > 0) {
         num_digits++;
         x /= 10;
     }
+    if (num_digits == 0) {
+        print("0");
+        return;
+    }
     x = cx;
-    long long p10 = 1;
+    int p10 = 1;
     for (int i = 0; i < num_digits; i++) {
         p10 *= 10;
+    }
+    for (int i = 0; i < num_digits; i++) {
+        p10 /= 10;
+        int d = x / p10;
+        console_write_char('0' + d, 15);
+        x -= d * p10;
     }
 
 }

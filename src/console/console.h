@@ -6,7 +6,8 @@
 #define VGA_HEIGHT 20
 
 
-void print(char* c);
+void print(char* str);
+void println(char* str);
 void print_int(int x);
 void console_init();
 

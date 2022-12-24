@@ -8,10 +8,36 @@ extern void idt_load(struct idt_ptr* ptr);
 extern void int0h();
 extern void int21h();
 extern void int_generic_h();
+extern void enable_interrupts();
+extern void disable_interrupts();
 
 
 struct idt_entry idt[NUM_INTERRUPTS];
 struct idt_ptr idtp;
+
+int cli_count;
+
+void pop_cli() {
+    if (cli_count <= 0) {
+        println("error pop cli with count already <= 0");
+    }
+    else {
+        cli_count--;
+        if (cli_count == 0) disable_interrupts();
+    }
+}
+
+void push_cli() {
+    if (cli_count < 0) {
+        println("error push cli with count < 0");
+    }
+    else {
+        cli_count++;
+        if (cli_count == 1) enable_interrupts();
+    }
+
+}
+
 
 
 void intr_0_handler() {
@@ -49,6 +75,8 @@ void idt_init() {
     idtp.limit = sizeof(idt) - 1;
     idtp.base = (uint32_t) &idt;
 
+    cli_count = 0;
+
 
     for (int i = 0; i < NUM_INTERRUPTS; i++) {
         idt_set(i, int_generic_h);
@@ -76,7 +104,6 @@ static void test_div_by_zero_int0() {
 }
 
 
-extern void enable_interrupts();
 
 void external_interrupts_test() {
     enable_interrupts();   
