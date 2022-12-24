@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "console/console.h"
 #include "disk/disk.h"
+#include "disk/streamer.h"
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/heap/kheap.h"
@@ -28,7 +29,7 @@ void kernel_main() {
     // print("cc");
     // print("\n");
     // println("");
-    
+    disk_streamer_test();
     // test_fs_utils();
     // test_paging_set();
     // kheap_test();
