@@ -19,7 +19,23 @@ build: ${FILES}
 format:
 	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
 
+builddir:
+	mkdir -p ./build
+	mkdir -p ./build/console
+	mkdir -p ./build/idt
+	mkdir -p ./build/memory
+	mkdir -p ./build/io
+	mkdir -p ./build/memory/heap
+	mkdir -p ./build/memory/paging
+	mkdir -p ./build/disk
+	mkdir -p ./build/fs
+	mkdir -p ./build/lib
+	mkdir -p ./build/lib/string
+	mkdir -p ./build/disk
+
+
 lint:
+	make builddir
 	make clean
 	bear -- ./build.sh
 	find ./src -iname *.h -o -iname *.c | xargs clang-tidy
