@@ -38,6 +38,8 @@ builddir:
 lint:
 	make builddir
 	make clean
+	alias i686-elf-gcc='clang'
+	alias i686-elf-ld='ld'
 	bear -- ./build.sh
 	find ./src -iname *.h -o -iname *.c | xargs clang-tidy
 
