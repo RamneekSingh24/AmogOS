@@ -1,5 +1,5 @@
 #ifndef STRING_H
-#define STRING_h
+#define STRING_H
 
 #include <stdbool.h>
 

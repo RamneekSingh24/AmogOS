@@ -38,9 +38,8 @@ int disk_read_sectors(struct disk *idisk, int start_lba, int count,
     unsigned short *ptr = (unsigned short *)buffer;
 
     // poll
-    char c;
     for (int i = 0; i < count; i++) {
-        while (!((c = port_io_input_byte(0x1F7)) & 0x08)) {
+        while (!(port_io_input_byte(0x1F7) & 0x08)) {
         }
         for (int i = 0; i < DISK_SECTOR_SIZE / 2; i++) {
             *ptr++ = port_io_input_word(0x1F0);

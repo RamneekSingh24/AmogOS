@@ -23,10 +23,12 @@ int disk_stream_seek(struct disk_stream *stream, size_t pos) {
 }
 
 int disk_stream_read(struct disk_stream *stream, void *out_buf, size_t size) {
+
     struct disk *disk = stream->disk;
     char *buf = kzalloc(disk->sector_size);
     size_t end = stream->byte_offset + size;
-    int ret;
+
+    int ret = 0;
 
     while (stream->byte_offset < end) {
         size_t lba = stream->byte_offset / disk->sector_size;

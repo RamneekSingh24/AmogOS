@@ -11,13 +11,18 @@ FILES += ./build/disk/streamer.o
 
 # ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
-FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
+FLAGS = -g -Wno-ignored-optimization-argument -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
 build: ${FILES}
 	./build.sh
 
 format:
 	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
+
+lint:
+	make clean
+	bear -- ./build.sh
+	find ./src -iname *.h -o -iname *.c | xargs clang-tidy
 
 all: ./bin/boot.bin ./bin/kernel.bin
 	rm -rf ./bin/os.bin
