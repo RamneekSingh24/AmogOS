@@ -24,6 +24,7 @@ jobs:
 
     - name: Install brew and i686 tools
       run: |
+        sudo apt-get install build-essential procps curl file git
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         brew install i686-elf-binutils i686-elf-gcc
     
