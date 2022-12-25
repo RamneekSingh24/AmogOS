@@ -21,6 +21,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install bear
+
+    - name: Install brew and i686 tools
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        brew install i686-elf-binutils i686-elf-gcc
     
     - name: Lint
       run: |
