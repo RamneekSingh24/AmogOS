@@ -20,6 +20,7 @@ format:
 	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
 
 builddir:
+	mkdir -p ./bin
 	mkdir -p ./build
 	mkdir -p ./build/console
 	mkdir -p ./build/idt
