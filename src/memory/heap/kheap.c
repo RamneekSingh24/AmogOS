@@ -181,6 +181,17 @@ void *kzalloc(size_t size) {
     return ptr;
 }
 
+int kheap_num_free_blocks() {
+    int num_free = 0;
+    for (int i = 0; i < kheap.entry_table->num_entries; i++) {
+        if (get_kheap_entry_type(kheap.entry_table->entries[i]) ==
+            KHEAP_BLOCK_TABLE_ENTRY_FREE) {
+            num_free++;
+        }
+    }
+    return num_free;
+}
+
 // ----------------------- tests ------------------- //
 
 void kheap_test() {

@@ -7,3 +7,5 @@ bs=512
 *.o
 build/*.o
 build/*/*.o
+bs=*
+compile_commands.json

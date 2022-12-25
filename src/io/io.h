@@ -1,5 +1,5 @@
 #ifndef IO_H
-#define IO_h
+#define IO_H
 
 unsigned char port_io_input_byte();
 unsigned short port_io_input_word();

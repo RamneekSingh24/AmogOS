@@ -1,0 +1,31 @@
+name: clang-tidy-lint
+
+on: [push, pull_request]
+
+jobs:
+  clang_tidy_lint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/setup-nasm@v1
+
+    - name: Set up Clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+        platform: x64
+
+    - name: Install bear
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install bear
+
+    - name: Install gcc
+      run: |
+        sudo apt-get install build-essential gcc
+
+    - name: Lint
+      run: |
+        make lint
