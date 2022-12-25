@@ -6,16 +6,36 @@ BITS 16
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
 
-_start:
-    jmp short start ; BIOS parameter block
-    nop
+jmp short start ; jump to start of boot sector
+nop
 
- times 33 db 0 ; BIOS parameter block
+; FAT16 Header
+OEMIdentifier           db 'AMOGOS  '
+BytesPerSector          dw 0x200
+SectorsPerCluster       db 0x80
+ReservedSectors         dw 200
+FATCopies               db 0x02
+RootDirEntries          dw 0x40
+NumSectors              dw 0x00
+MediaType               db 0xF8
+SectorsPerFat           dw 0x100
+SectorsPerTrack         dw 0x20
+NumberOfHeads           dw 0x40
+HiddenSectors           dd 0x00
+SectorsBig              dd 0x773594
 
-; start:
-;     jmp 0:start2
+; Extended BPB (Dos 4.0)
+DriveNumber             db 0x80
+WinNTBit                db 0x00
+Signature               db 0x29
+VolumeID                dd 0xD105
+VolumeIDString          db 'AMOGOS BOOT'
+SystemIDString          db 'FAT16   '
 
 start:
+    jmp 0:start16
+
+start16:
     ; set up 8086's memory segments(1 MB) 
     cli
     mov ax, 0x00
