@@ -22,23 +22,20 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install bear
 
-    - name: Install homebrew
+    - name: Install homebrew and i686 tools
       run: |
         sudo apt-get install build-essential procps curl file git
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
         test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
         echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
-        echo "::add-path::/home/linuxbrew/.linuxbrew/bin"
+        echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >>~/.bashrc
+        echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >>~/.profile
+        source ~/.bashrc
+        source ~/.profile
         brew --version
-
-    - name: Verify Homebrew's Installation
-      run: brew --version
-
-    - name: Install i686 tools
-      run: |
         brew install i686-elf-binutils i686-elf-gcc
-    
+
     - name: Lint
       run: |
         make lint
