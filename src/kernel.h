@@ -2,6 +2,6 @@
 #define KERNEL_H
 
 void kernel_main();
-void print(char *str);
+void panic(char *msg);
 
 #endif

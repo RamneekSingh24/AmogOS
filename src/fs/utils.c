@@ -66,6 +66,7 @@ void test_parse_path() {
     struct path_t *path = parse_path("0:/");
     if (path == NULL) {
         print("path is NULL");
+        return;
     }
     if (path->drive_no != 0) {
         print("drive_no is not 0");
