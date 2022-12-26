@@ -2,7 +2,7 @@
 #include "console/console.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
-#include "fs/utils.h"
+#include "fs/file.h"
 #include "idt/idt.h"
 #include "io/io.h"
 #include "memory/heap/kheap.h"
@@ -11,9 +11,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void console_test() {
-    print("Hello World!\n");
-    print("Hello World!\n");
+void panic(char *msg) {
+    println(msg);
+    while (1) {
+    };
 }
 
 void kernel_main() {
@@ -21,6 +22,7 @@ void kernel_main() {
     console_init();
     kheap_init();
     kpaging_init();
+    fs_init();
     disk_init();
     idt_init();
 
@@ -29,13 +31,14 @@ void kernel_main() {
     // print("cc");
     // print("\n");
     // println("");
-    disk_streamer_test();
+    // disk_streamer_test();
     // test_fs_utils();
     // test_paging_set();
     // kheap_test();
     // console_test();
     // idt_test();
     // io_test();
+    // fs_test();
 
     // interrupts disabled on here
     // external_interrupts_test:
@@ -43,4 +46,6 @@ void kernel_main() {
     // should see keyboard pressed again and again due to timer interrupt
     // external_interrupts_test();
     // ^^ enables interrupts
+    while (1) {
+    };
 }

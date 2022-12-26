@@ -8,9 +8,11 @@ FILES += ./build/io/io.asm.o ./build/io/io.o
 FILES += ./build/memory/heap/kheap.o 
 FILES += ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o
 FILES += ./build/disk/disk.o
-FILES += ./build/fs/utils.o
 FILES += ./build/lib/string/string.o
 FILES += ./build/disk/streamer.o
+FILES += ./build/fs/utils.o
+FILES += ./build/fs/file.o
+FILES += ./build/fs/fat/fat16.o
 
 # ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
 INCLUDES = -I./src
@@ -34,6 +36,7 @@ builddir:
 	mkdir -p ./build/memory/paging
 	mkdir -p ./build/disk
 	mkdir -p ./build/fs
+	mkdir -p ./build/fs/fat
 	mkdir -p ./build/lib
 	mkdir -p ./build/lib/string
 	mkdir -p ./build/disk
@@ -123,7 +126,11 @@ make qemu:
 ./build/disk/streamer.o: ./src/disk/streamer.c
 	${CC} -I./src/disk ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/disk/streamer.c -o ./build/disk/streamer.o
 
+./build/fs/file.o: ./src/fs/file.c
+	${CC} -I./src/fs ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/fs/file.c -o ./build/fs/file.o
 
+./build/fs/fat/fat16.o: ./src/fs/fat/fat16.c
+	${CC} -I./src/fs/fat ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/fs/fat/fat16.c -o ./build/fs/fat/fat16.o
 
 clean:
 	rm -rf ./bin/boot.bin ./bin/kernel.bin ./bin/os.bin ${FILES} ./build/kernelfull.o

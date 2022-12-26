@@ -14,4 +14,7 @@
 
 #define FS_MAX_PATH_LEN 108
 
+#define MAX_FILESYSTEMS 8
+#define MAX_FILE_DESCRIPTORS 1024
+
 #endif

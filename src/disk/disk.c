@@ -11,6 +11,8 @@ void disk_init() {
     memset(&disk, 0, sizeof(struct disk));
     disk.type = DISK_TYPE_REAL;
     disk.sector_size = DISK_SECTOR_SIZE;
+    disk.fs = fs_resolve(&disk);
+    disk.id = 0;
 }
 
 struct disk *get_disk(int index) {
@@ -28,11 +30,11 @@ int disk_read_sectors(struct disk *idisk, int start_lba, int count,
         return -STATUS_IO_ERROR;
     }
 
-    port_io_out_byte(0x1F6, 0xE0 | ((start_lba >> 24)));
+    port_io_out_byte(0x1F6, (start_lba >> 24) | 0xE0);
     port_io_out_byte(0x1F2, count);
     port_io_out_byte(0x1F3, (unsigned char)(start_lba & 0xFF));
     port_io_out_byte(0x1F4, (unsigned char)(start_lba >> 8));
-    port_io_out_byte(0x1F5, (unsigned char)(start_lba >> 8));
+    port_io_out_byte(0x1F5, (unsigned char)(start_lba >> 16));
     port_io_out_byte(0x1F7, 0x20);
 
     unsigned short *ptr = (unsigned short *)buffer;
