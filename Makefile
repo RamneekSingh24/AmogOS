@@ -13,8 +13,12 @@ FILES += ./build/disk/streamer.o
 FILES += ./build/fs/utils.o
 FILES += ./build/fs/file.o
 FILES += ./build/fs/fat/fat16.o
+FILES += ./build/gdt/gdt.o
+FILES += ./build/gdt/gdt.asm.o
+FILES += ./build/task/task.o
+FILES += ./build/task/tss.asm.o
 
-# ./build/idt/idt.asm.o ./build/idt/idt.o ./build/memory/memory.o ./build/io/io.asm.o ./build/memory/heap/heap.o ./build/memory/heap/kheap.o ./build/memory/paging/paging.o ./build/memory/paging/paging.asm.o ./build/disk/disk.o 
+
 INCLUDES = -I./src
 FLAGS = -g -Wno-ignored-optimization-argument -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 FLAGS += -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
@@ -40,6 +44,8 @@ builddir:
 	mkdir -p ./build/lib
 	mkdir -p ./build/lib/string
 	mkdir -p ./build/disk
+	mkdir -p ./build/gdt
+	mkdir -p ./build/task
 
 lint:
 	make builddir
@@ -131,6 +137,22 @@ make qemu:
 
 ./build/fs/fat/fat16.o: ./src/fs/fat/fat16.c
 	${CC} -I./src/fs/fat ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/fs/fat/fat16.c -o ./build/fs/fat/fat16.o
+
+./build/gdt/gdt.o: ./src/gdt/gdt.c
+	${CC} -I./src/gdt ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/gdt/gdt.c -o ./build/gdt/gdt.o
+
+
+./build/gdt/gdt.asm.o: ./src/gdt/gdt.asm
+	nasm -f elf -g ./src/gdt/gdt.asm -o ./build/gdt/gdt.asm.o
+
+
+./build/task/task.o: ./src/task/task.c
+	${CC} -I./src/tss ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/task/task.c -o ./build/task/task.o
+
+
+./build/task/tss.asm.o: ./src/task/tss.asm
+	nasm -f elf -g ./src/task/tss.asm -o ./build/task/tss.asm.o
+
 
 clean:
 	rm -rf ./bin/boot.bin ./bin/kernel.bin ./bin/os.bin ${FILES} ./build/kernelfull.o

@@ -26,6 +26,8 @@ struct page_table_32b {
 
 void kpaging_init();
 
+int paging_create_va(uint8_t flags, struct page_table_32b *pt);
+int paging_free_page_table(struct page_table_32b *table_table);
 void paging_switch(struct page_table_32b *pt);
 
 void test_paging_set();

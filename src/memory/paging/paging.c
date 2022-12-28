@@ -1,6 +1,7 @@
 #include "paging.h"
 #include "config.h"
 #include "console/console.h"
+#include "kernel.h"
 #include "memory/heap/kheap.h"
 #include "status.h"
 
@@ -11,13 +12,30 @@ struct page_table_32b *current_pt[N_CPU_MAX];
 extern void paging_load_dir(uint32_t *cr3);
 extern void paging_enable();
 
-void kpaging_create(uint8_t flags, struct page_table_32b *page_table) {
+int paging_create_va(uint8_t flags, struct page_table_32b *page_table) {
     page_table_entry *pt_dir =
         kzalloc(sizeof(page_table_entry) * NUM_PAGE_TABLE_ENTRIES);
+    if (!pt_dir) {
+        return -STATUS_NOT_ENOUGH_MEM;
+    }
     int offset = 0;
     for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
         page_table_entry *pt_i =
             kzalloc(sizeof(page_table_entry) * NUM_PAGE_TABLE_ENTRIES);
+        if (!pt_i) {
+            if (pt_dir) {
+                kfree(pt_dir);
+            }
+            for (int j = 0; j < i; j++) {
+                if (pt_dir) {
+                    uint32_t pte = pt_dir[j];
+                    uint32_t *pt_j = (uint32_t *)(pte & PAGE_FRAME_NUM_MASK);
+                    kfree(pt_j);
+                }
+            }
+            return -STATUS_NOT_ENOUGH_MEM;
+        }
+
         for (int j = 0; j < NUM_PAGE_TABLE_ENTRIES; j++) {
             pt_i[j] = (offset + j * PAGE_SIZE) | flags;
         }
@@ -29,6 +47,20 @@ void kpaging_create(uint8_t flags, struct page_table_32b *page_table) {
 
     page_table->cr3 = pt_dir;
     page_table->num_levels = 2;
+    return STATUS_OK;
+}
+
+int paging_free_page_table(struct page_table_32b *pt) {
+    if (pt->num_levels == 1) {
+        panic("single level pages not support yet..!");
+    }
+    for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+        uint32_t pte = pt->cr3[i];
+        uint32_t *second_level_pt = (uint32_t *)(pte & PAGE_FRAME_NUM_MASK);
+        kfree(second_level_pt);
+    }
+    kfree(pt->cr3);
+    return 0;
 }
 
 void paging_switch(struct page_table_32b *pt) {
@@ -41,7 +73,10 @@ void paging_switch(struct page_table_32b *pt) {
 }
 
 void kpaging_init() {
-    kpaging_create(PAGE_PRESENT | PAGE_WRITE_ALLOW, &kpage_table);
+    int res = paging_create_va(PAGE_PRESENT | PAGE_WRITE_ALLOW, &kpage_table);
+    if (res != STATUS_OK) {
+        panic("Failed to create kernel page table");
+    }
     paging_switch(&kpage_table);
     paging_enable();
 }
