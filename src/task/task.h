@@ -21,19 +21,31 @@ struct registers {
     uint32_t ss;
 };
 
+struct process;
+
 struct task {
     struct page_table_32b page_table;
 
     struct registers registers;
+
+    struct process *proc;
 
     struct task *next;
 
     struct task *prev;
 };
 
-struct task *task_new();
+struct task *task_new(struct process *proc);
 struct task *task_current();
 struct task *task_get_next();
 int task_free(struct task *task);
 
+int task_switch(struct task *task);
+int task_page();
+void task_run_init_task();
+
+// asm functions
+void task_return(struct registers *regs);
+void restore_general_purpose_registers(struct registers *regs);
+void user_registers();
 #endif

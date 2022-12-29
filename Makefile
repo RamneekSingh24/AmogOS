@@ -17,6 +17,8 @@ FILES += ./build/gdt/gdt.o
 FILES += ./build/gdt/gdt.asm.o
 FILES += ./build/task/task.o
 FILES += ./build/task/tss.asm.o
+FILES += ./build/task/process.o
+FILES += ./build/task/task.asm.o 
 
 
 INCLUDES = -I./src
@@ -46,12 +48,13 @@ builddir:
 	mkdir -p ./build/disk
 	mkdir -p ./build/gdt
 	mkdir -p ./build/task
+	mkdir -p ./programs/build
 
 lint:
 	make builddir
 	make clean
 	bear -- make compile_commands
-	find ./src -iname *.h -o -iname *.c | xargs clang-tidy
+	find ./src -iname *.h -o -iname *.c | xargs clang-tidy -header-filter=.* -system-headers
 	make clean
 
 compile_commands: CC=gcc
@@ -59,13 +62,14 @@ compile_commands: LD=ld
 compile_commands: ./bin/boot.bin ${FILES}
 
 
-all: ./bin/boot.bin ./bin/kernel.bin
+all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	rm -rf ./bin/os.bin
 	dd if=./bin/boot.bin >> ./bin/os.bin
 	dd if=./bin/kernel.bin >> ./bin/os.bin
-	dd if=/dev/zero bs=1048576 count=16 >> ./bin/os.bin
+	dd if=/dev/zero bs=10485760 count=16 >> ./bin/os.bin
 	sudo mount -t vfat ./bin/os.bin /mnt/d
 	sudo cp ./hello.txt /mnt/d
+	sudo cp ./programs/blank/blank.bin /mnt/d
 	sudo umount /mnt/d
 
 make qemu: 
@@ -147,14 +151,26 @@ make qemu:
 
 
 ./build/task/task.o: ./src/task/task.c
-	${CC} -I./src/tss ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/task/task.c -o ./build/task/task.o
+	${CC} -I./src/task ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/task/task.c -o ./build/task/task.o
 
 
 ./build/task/tss.asm.o: ./src/task/tss.asm
 	nasm -f elf -g ./src/task/tss.asm -o ./build/task/tss.asm.o
 
+./build/task/task.asm.o: ./src/task/task.asm
+	nasm -f elf -g ./src/task/task.asm -o ./build/task/task.asm.o
 
-clean:
+./build/task/process.o: ./src/task/process.c
+	${CC} -I./src/task ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/task/process.c -o ./build/task/process.o
+
+
+user_programs:
+	cd ./programs/blank && make all
+
+user_programs_clean:
+	cd ./programs/blank && make clean
+
+clean: user_programs_clean
 	rm -rf ./bin/boot.bin ./bin/kernel.bin ./bin/os.bin ${FILES} ./build/kernelfull.o
 
 

@@ -27,4 +27,9 @@
 #define DEFAULT_USER_STACK_END                                                 \
     (DEFAULT_USER_STACK_START - DEFAULT_USER_STACK_SIZE)
 
+#define MAX_PROCS 10
+
+#define PROCESS_VMEM_VMEM_MAX_BLOCK_COUNT 10
+#define PROCESS_MAX_OPEN_FILES 10
+
 #endif

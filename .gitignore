@@ -9,3 +9,5 @@ build/*.o
 build/*/*.o
 bs=*
 compile_commands.json
+*.bin
+*.elf

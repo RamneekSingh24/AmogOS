@@ -10,6 +10,8 @@
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
 #include "memory/paging/paging.h"
+#include "status.h"
+#include "task/process.h"
 #include "task/tss.h"
 
 #include <stddef.h>
@@ -56,6 +58,18 @@ void kernel_main() {
     fs_init();
     disk_init();
     idt_init();
+    procs_init();
+
+    println("Starting first proc..");
+
+    struct process *proc = 0;
+    int res = process_new("0:/blank.bin", &proc);
+    if (res != STATUS_OK) {
+        print_int(res);
+        panic("\nFailed to load blank.bin");
+    }
+
+    task_run_init_task();
 
     // print("\n");
     // print("bb");
