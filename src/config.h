@@ -19,10 +19,14 @@
 
 #define TOTAL_GDT_SEGS 6
 
-#define DEFAULT_USER_PROG_ENTRY 0x400000
+#define KHEAP_SAFE_BOUNDARY                                                    \
+    0x8000000 // INVARIANT: Kernel will not use physical addresses beyond this
+              // Safe to map processes memory beyond this
+
+#define DEFAULT_USER_PROG_ENTRY (KHEAP_SAFE_BOUNDARY + 0x400000)
 #define DEFAULT_USER_DATA_SEGMENT 0x23
 #define DEFAULT_USER_CODE_SEGMENT 0x1B
-#define DEFAULT_USER_STACK_START 0x3FF000
+#define DEFAULT_USER_STACK_START (KHEAP_SAFE_BOUNDARY + 0x3FF000)
 #define DEFAULT_USER_STACK_SIZE (1024 * 16) // 16 KB
 #define DEFAULT_USER_STACK_END                                                 \
     (DEFAULT_USER_STACK_START - DEFAULT_USER_STACK_SIZE)
