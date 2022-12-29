@@ -13,7 +13,7 @@
 #define PAGE_WRITE_ALLOW 0b00000010 // Page can be written to
 #define PAGE_PRESENT 0b00000001     // Page is present
 
-#define PAGE_FRAME_NUM_MASK 0xFFFFF000
+#define PAGE_FRAME_LOC_MASK 0xFFFFF000
 
 #define NUM_PAGE_TABLE_ENTRIES 1024
 
@@ -26,7 +26,15 @@ struct page_table_32b {
 
 void kpaging_init();
 
+int paging_create_4gb_page_tables(uint8_t flags, struct page_table_32b *pt);
+int paging_free_page_table(struct page_table_32b *table_table);
 void paging_switch(struct page_table_32b *pt);
+
+void *paging_up_align_addr(void *addr);
+
+int paging_map_memory_region(struct page_table_32b *pt, void *data_va_start,
+                             void *data_paddr, void *data_va_end,
+                             uint8_t flags);
 
 void test_paging_set();
 
