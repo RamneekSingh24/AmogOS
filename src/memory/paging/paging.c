@@ -100,8 +100,15 @@ int paging_new_vpn_to_pfn(struct page_table_32b *pt, uint32_t vpn, uint32_t pfn,
             return -STATUS_INVALID_ARG;
         }
     }
+
     uint32_t page_addr = pfn * PAGE_SIZE;
     second_level_pt[second_level_pt_idx] = page_addr | flags;
+
+    // overwrite flags in dir (the hardware uses `and` of the permissions in the
+    // 2 levels)
+    if (overwrite) {
+        pt->cr3[dir_idx] = (uint32_t)second_level_pt | flags;
+    }
 
     return STATUS_OK;
 }
@@ -279,6 +286,8 @@ void *paging_up_align_addr(void *addr) {
 // tables if alloced
 // ** User should call paging_free_page_table(..) to free up page tables
 // Maps [data_va_start... data_va_end) to [data_paddr :)
+// ** Overwrites old last level mappings
+// ** Overwrites old dir level flags
 int paging_map_memory_region(struct page_table_32b *pt, void *data_va_start,
                              void *data_paddr, void *data_va_end,
                              uint8_t flags) {

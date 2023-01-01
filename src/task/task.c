@@ -18,8 +18,7 @@ int task_init(struct task *task, struct process *proc) {
     // For now creating a full 4GB page table for each task
     // TODO: Everything is accessable from user space for now.
     // Fix this when we have page fault handler
-    int res = paging_create_4gb_page_tables(PAGE_PRESENT | PAGE_WRITE_ALLOW |
-                                                PAGE_USER_ACCESS_ALLOW,
+    int res = paging_create_4gb_page_tables(PAGE_PRESENT | PAGE_WRITE_ALLOW,
                                             &task->page_table);
     if (res != STATUS_OK) {
         return res;
