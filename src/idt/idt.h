@@ -35,7 +35,7 @@ struct interrupt_frame {
     uint32_t ss;
 } __attribute__((packed));
 
-typedef void*(*SYSCALL_HANDLER)(struct interrupt_frame* frame);
+typedef void *(*SYSCALL_HANDLER)(struct interrupt_frame *frame);
 
 void syscall_register_command(int command_num, SYSCALL_HANDLER hanlder);
 

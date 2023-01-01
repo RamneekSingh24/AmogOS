@@ -46,15 +46,14 @@ void intr_21_handler() {
     port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
 }
 
-  
 static SYSCALL_HANDLER sys_calls[NUM_SYS_CALLS];
 
-void* syscall_handle_command(int command, struct interrupt_frame *frame) {
+void *syscall_handle_command(int command, struct interrupt_frame *frame) {
     if (command < 0 || command >= NUM_SYS_CALLS) {
         return 0;
     }
 
-    SYSCALL_HANDLER sys_call = sys_calls[command]; 
+    SYSCALL_HANDLER sys_call = sys_calls[command];
     if (!sys_call) {
         return 0;
     }
@@ -62,17 +61,15 @@ void* syscall_handle_command(int command, struct interrupt_frame *frame) {
     return sys_call(frame);
 }
 
-void syscall_register_command(int command_num, SYSCALL_HANDLER hanlder) {
-    if  (command_num < 0 || command_num >= NUM_SYS_CALLS) {
+void syscall_register_command(int command_num, SYSCALL_HANDLER handler) {
+    if (command_num < 0 || command_num >= NUM_SYS_CALLS) {
         panic("couldn't register syscall");
     }
     if (sys_calls[command_num]) {
         panic("syscall command number already in use");
     }
-    sys_calls[command_num] = hanlder;
+    sys_calls[command_num] = handler;
 }
-
-
 
 void *intr_80h_handler(int command, struct interrupt_frame *frame) {
     void *res = 0;
@@ -85,6 +82,7 @@ void *intr_80h_handler(int command, struct interrupt_frame *frame) {
     //  Except for addresses above "config.h/KHEAP_SAFE_BOUNDARY"
     //  Addresses above this will be accessable by the user space.
     //  All the kernel space is mapping to <= KHEAP_SAFE_BOUNDARY
+    // NOTE: kernel_va_switch changed to not load kernel's cr3 for now
     kernel_va_switch();
 
     task_save_current_state(frame);

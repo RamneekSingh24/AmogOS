@@ -45,6 +45,12 @@ void print(char *str) {
     }
 }
 
+void printn(char *str, int n) {
+    for (int i = 0; i < n; i++) {
+        console_write_char(str[i], 15);
+    }
+}
+
 void println(char *str) {
     print(str);
     print("\n");

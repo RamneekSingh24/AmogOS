@@ -1,5 +1,6 @@
 #include "task.h"
 #include "config.h"
+#include "console/console.h"
 #include "kernel.h"
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
@@ -10,9 +11,7 @@ struct task *curr_task = 0;
 struct task *tasks_ll_head = 0;
 struct task *tasks_ll_tail = 0;
 
-struct task *task_current() {
-    return curr_task;
-}
+struct task *task_current() { return curr_task; }
 
 int task_init(struct task *task, struct process *proc) {
     memset(task, 0, sizeof(struct task));
@@ -144,4 +143,28 @@ void task_save_current_state(struct interrupt_frame *frame) {
     curr_task->registers.edi = frame->edi;
     curr_task->registers.edx = frame->edx;
     curr_task->registers.esi = frame->esi;
+}
+
+int copy_data_from_user(void *dst, void *src, uint32_t nbytes) {
+    // check if src is in user space
+    // user is allowed to user [KHEAP_SAFE_BOUNDARY, ... END_OF_MEM)
+    if (((uint32_t)src) < KHEAP_SAFE_BOUNDARY ||
+        ((uint32_t)src) + nbytes < KHEAP_SAFE_BOUNDARY) {
+        panic("Invalid user memory access");
+        return -STATUS_INVALID_USER_MEM_ACCESS;
+    }
+    memcpy(dst, src, nbytes);
+
+    return STATUS_OK;
+};
+
+// ASSUME: all items are 4 bytes
+void *task_get_stack_item(struct task *task, int index) {
+    uint32_t *stack = (uint32_t *)task->registers.esp;
+    uint32_t item;
+    int res = copy_data_from_user(&item, &stack[index], sizeof(uint32_t));
+    if (res != STATUS_OK) {
+        return 0;
+    }
+    return (void *)item;
 }

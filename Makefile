@@ -20,6 +20,7 @@ FILES += ./build/task/tss.asm.o
 FILES += ./build/task/process.o
 FILES += ./build/task/task.asm.o 
 FILES += ./build/syscall/syscall.o
+FILES += ./build/syscall/print.o
 
 
 INCLUDES = -I./src
@@ -52,6 +53,22 @@ builddir:
 	mkdir -p ./build/syscall
 	mkdir -p ./programs/blank/build
 
+detected_OS := $(shell uname)
+MKFS := 
+GCC := 
+ifeq ($(detected_OS),Darwin)        
+    MKFS += mkfs_macos
+	GCC += /opt/homebrew/Cellar/gcc/12.2.0/bin/gcc-12
+endif
+ifeq ($(detected_OS),Linux)
+    MKFS += mkfs_linux
+	GCC += gcc
+endif
+
+compile_commands: CC=${GCC}
+compile_commands: LD=ld
+compile_commands: ./bin/boot.bin ${FILES}
+
 lint:
 	make builddir
 	make clean
@@ -59,9 +76,25 @@ lint:
 	find ./src -iname *.h -o -iname *.c | xargs clang-tidy -header-filter=.* -system-headers
 	make clean
 
-compile_commands: CC=gcc
-compile_commands: LD=ld
-compile_commands: ./bin/boot.bin ${FILES}
+
+
+
+
+mkfs_linux: ./bin/boot.bin ./bin/kernel.bin user_programs
+	sudo mount -t vfat ./bin/os.bin /mnt/d
+	sudo cp ./hello.txt /mnt/d
+	sudo cp ./programs/blank/blank.bin /mnt/d
+	sudo umount /mnt/d
+
+make macos_setup:
+	python3 -m venv .venv
+	source .venv/bin/activate && pip3 install -r pyfatfs
+
+mkfs_macos:
+	source .venv/bin/activate && python3 mkfs.py
+
+
+
 
 
 all: ./bin/boot.bin ./bin/kernel.bin user_programs
@@ -69,14 +102,13 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	dd if=./bin/boot.bin >> ./bin/os.bin
 	dd if=./bin/kernel.bin >> ./bin/os.bin
 	dd if=/dev/zero bs=10485760 count=16 >> ./bin/os.bin
-	sudo mount -t vfat ./bin/os.bin /mnt/d
-	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/blank/blank.bin /mnt/d
-	sudo umount /mnt/d
+	make ${MKFS}
 
 make qemu: 
 	./build.sh
 	qemu-system-i386 -hda ./bin/os.bin
+	# qemu-system-x86_64 -hda ./bin/os.bin works too due to backwards compatibility
+
 
 
 ./bin/kernel.bin: $(FILES)
@@ -169,7 +201,8 @@ make qemu:
 ./build/syscall/syscall.o: ./src/syscall/syscall.c
 	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/syscall.c -o ./build/syscall/syscall.o
 
-
+./build/syscall/print.o: ./src/syscall/print.c
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/print.c -o ./build/syscall/print.o
 
 user_programs:
 	cd ./programs/blank && make all

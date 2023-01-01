@@ -8,5 +8,6 @@ void print(char *str);
 void println(char *str);
 void print_int(int x);
 void console_init();
+void printn(char *str, int n);
 
 #endif

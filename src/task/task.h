@@ -5,6 +5,7 @@
 #include "config.h"
 #include "idt/idt.h"
 #include "memory/paging/paging.h"
+#include <stdbool.h>
 
 struct registers {
     uint32_t edi;
@@ -50,5 +51,7 @@ void task_return(struct registers *regs);
 void restore_general_purpose_registers(struct registers *regs);
 void user_registers();
 void task_save_current_state(struct interrupt_frame *frame);
+int copy_data_from_user(void *dst, void *src, uint32_t nbytes);
+void *task_get_stack_item(struct task *task, int index);
 
 #endif

@@ -66,9 +66,7 @@ static void process_init(struct process *process) {
     memset(process, 0, sizeof(struct process));
 }
 
-struct process *current_process() {
-    return current_proc;
-}
+struct process *current_process() { return current_proc; }
 
 int get_free_slot() {
     for (int i = 0; i < MAX_PROCS; i++) {

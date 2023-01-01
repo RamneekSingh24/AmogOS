@@ -11,9 +11,9 @@
 #include "memory/memory.h"
 #include "memory/paging/paging.h"
 #include "status.h"
+#include "syscall/syscall.h"
 #include "task/process.h"
 #include "task/tss.h"
-#include "syscall/syscall.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -51,9 +51,12 @@ void gdt_init() {
 
 void kernel_registers();
 
+// Switches to kernel privlidged segments
+// DOES NOT SWITCH PAGE TABLES
 void kernel_va_switch() {
     kernel_registers();
-    paging_load_kernel_page_table();
+    // No need to load kernel page table here, kernel is already mapped
+    // paging_load_kernel_page_table();
 }
 
 void kernel_main() {
