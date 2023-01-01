@@ -120,6 +120,17 @@ static int process_map_memory(struct process *proc) {
     return res;
 }
 
+struct process *process_current() { return current_proc; }
+
+void set_current_process(struct process *proc) {
+    if (current_proc && current_proc->status == PROC_RUNNING &&
+        current_proc != proc) {
+        current_proc->status = PROC_READY;
+    }
+    current_proc = proc;
+    current_proc->status = PROC_RUNNING;
+}
+
 int process_new(const char *filename, struct process **process_out) {
     int res = 0;
     struct task *task = 0;
@@ -159,7 +170,9 @@ int process_new(const char *filename, struct process **process_out) {
     if (res != STATUS_OK) {
         goto out;
     }
-
+    proc->keyboard.head = 0;
+    proc->keyboard.tail = 0;
+    memset(proc->keyboard.buf, 0, sizeof(proc->keyboard.buf));
     *process_out = proc;
 
 out:

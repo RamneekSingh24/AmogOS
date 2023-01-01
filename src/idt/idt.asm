@@ -4,8 +4,10 @@ extern intr_0_handler
 extern intr_21_handler
 extern intr_80h_handler
 extern intr_generic_handler
+extern interrupt_handler
+extern interrupt_handler_asm_wrappers
 
-global int0h, int21h, int_generic_h
+global int0h, int_generic_h
 global enable_interrupts, disable_interrupts
 global int80h
 
@@ -32,19 +34,6 @@ int0h:
 
     pushad ; save all general purpose registers
     call intr_0_handler
-    popad  ; restore gp registers 
-    
-    sti
-    iret   ; special instruction to return from interrupt and go back to where we were 
-
-
-
-
-int21h:
-    cli    ; disable interrupts to prevent nested interrupts
-
-    pushad ; save all general purpose registers
-    call intr_21_handler
     popad  ; restore gp registers 
     
     sti
@@ -83,6 +72,33 @@ int80h:
     iretd
 
 
+%macro interrupt 1
+    global int%1
+    int%1:
+        ; INTERRUPT FRAME START
+        ; ALREADY PUSHED TO US BY THE PROCESSOR UPON ENTRY TO THIS INTERRUPT
+        ; uint32_t ip
+        ; uint32_t cs;
+        ; uint32_t flags
+        ; uint32_t sp;
+        ; uint32_t ss;
+        ; Pushes the general purpose registers to the stack
+        pushad
+        ; Interrupt frame end
+        push esp
+        push dword %1
+        call interrupt_handler
+        add esp, 8
+        popad
+        iret
+%endmacro
+
+%assign i 0
+%rep 512
+    interrupt i
+%assign i i+1
+%endrep
+
 
 
 ; A generic interupt handler
@@ -119,6 +135,17 @@ test_div0:
 
 
 
-
 section .data
 tmp_res: dd 0
+
+
+%macro interrupt_array_entry 1
+    dd int%1
+%endmacro
+
+interrupt_handler_asm_wrappers:
+%assign i 0
+%rep 512
+    interrupt_array_entry i
+%assign i i+1
+%endrep

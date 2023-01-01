@@ -19,8 +19,20 @@ void console_init() {
 }
 
 void console_put_char(int x, int y, char c, char color) {
-
     video_mem[y * VGA_WIDTH + x] = make_char(c, color);
+}
+
+void console_backspace() {
+    if (curr_x == 0 && curr_y == 0) {
+        return;
+    }
+    if (curr_x == 0) {
+        curr_y--;
+        curr_x = VGA_WIDTH - 1;
+    } else {
+        curr_x--;
+    }
+    console_put_char(curr_x, curr_y, ' ', 0);
 }
 
 void console_write_char(char c, char color) {
@@ -29,6 +41,11 @@ void console_write_char(char c, char color) {
         curr_x = 0;
         return;
     }
+    if (c == 0x08) {
+        console_backspace();
+        return;
+    }
+
     console_put_char(curr_x, curr_y, c, color);
     curr_x++;
     if (curr_x == VGA_WIDTH) {
@@ -47,9 +64,14 @@ void print(char *str) {
 
 void printn(char *str, int n) {
     for (int i = 0; i < n; i++) {
+        if (str[i] == '\0') {
+            break;
+        }
         console_write_char(str[i], 15);
     }
 }
+
+void print_char(char c) { console_write_char(c, 15); }
 
 void println(char *str) {
     print(str);

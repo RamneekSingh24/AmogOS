@@ -5,7 +5,7 @@
 #include "task/task.h"
 #include <stdint.h>
 
-enum { PROC_UNUSED, PROC_BLOCKED, PROC_READY };
+enum { PROC_UNUSED, PROC_BLOCKED, PROC_READY, PROC_RUNNING };
 
 struct process {
     uint16_t pid;
@@ -24,9 +24,17 @@ struct process {
 
     void *vmem_blocks[PROCESS_VMEM_VMEM_MAX_BLOCK_COUNT];
     int open_files[PROCESS_MAX_OPEN_FILES];
-} __attribute__((packed));
+
+    struct keyboard_buffer {
+        char buf[PROCESS_KEYBOARD_BUFFER_SIZE];
+        int head;
+        int tail;
+    } keyboard;
+};
 
 void procs_init();
 int process_new(const char *filename, struct process **process_out);
+void set_current_process(struct process *proc);
+struct process *process_current();
 
 #endif

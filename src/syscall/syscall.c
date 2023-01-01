@@ -5,7 +5,7 @@
 #include "task/task.h"
 
 void *syscall_hello_sum(struct interrupt_frame *frame) {
-    // print("Hello world syscall! Sum: ");
+    print("Hello world syscall! Sum: ");
     frame->ecx = 1989;
     int v2 = (int)task_get_stack_item(task_current(), 1);
     int v1 = (int)task_get_stack_item(task_current(), 0);
@@ -15,6 +15,8 @@ void *syscall_hello_sum(struct interrupt_frame *frame) {
 }
 
 void register_syscalls() {
+    syscall_register_command(SYS_CALL0_HELLO_WORLD_SUM, syscall_hello_sum);
     syscall_register_command(SYS_CALL1_PRINT, syscall_print);
-    // syscall_register_command(SYS_CALL0_HELLO_SUM, syscall_hello_sum);
+    syscall_register_command(SYS_CALL2_GET_CHAR, syscall_get_char);
+    syscall_register_command(SYS_CALL3_PUT_CHAR, syscall_put_char);
 }

@@ -35,6 +35,8 @@ struct task {
     struct task *next;
 
     struct task *prev;
+
+    void *kstack;
 };
 
 struct task *task_new(struct process *proc);
@@ -43,7 +45,6 @@ struct task *task_get_next();
 int task_free(struct task *task);
 
 int task_switch(struct task *task);
-int task_page();
 void task_run_init_task();
 
 // asm functions
@@ -53,5 +54,7 @@ void user_registers();
 void task_save_current_state(struct interrupt_frame *frame);
 int copy_data_from_user(void *dst, void *src, uint32_t nbytes);
 void *task_get_stack_item(struct task *task, int index);
+
+// int task_page(); NOT USED
 
 #endif

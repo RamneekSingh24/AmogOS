@@ -20,7 +20,9 @@ FILES += ./build/task/tss.asm.o
 FILES += ./build/task/process.o
 FILES += ./build/task/task.asm.o 
 FILES += ./build/syscall/syscall.o
-FILES += ./build/syscall/print.o
+FILES += ./build/syscall/user_io.o
+FILES += ./build/dev/keyboard.o
+FILES += ./build/dev/ps2.o
 
 
 INCLUDES = -I./src
@@ -51,7 +53,9 @@ builddir:
 	mkdir -p ./build/gdt
 	mkdir -p ./build/task
 	mkdir -p ./build/syscall
+	mkdir -p ./build/dev
 	mkdir -p ./programs/blank/build
+
 
 detected_OS := $(shell uname)
 MKFS := 
@@ -201,8 +205,16 @@ make qemu:
 ./build/syscall/syscall.o: ./src/syscall/syscall.c
 	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/syscall.c -o ./build/syscall/syscall.o
 
-./build/syscall/print.o: ./src/syscall/print.c
-	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/print.c -o ./build/syscall/print.o
+./build/syscall/user_io.o: ./src/syscall/user_io.c
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/user_io.c -o ./build/syscall/user_io.o
+
+./build/dev/keyboard.o: ./src/dev/keyboard.c
+	${CC} -I./src/dev ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/dev/keyboard.c -o ./build/dev/keyboard.o
+
+./build/dev/ps2.o: ./src/dev/ps2.c
+	${CC} -I./src/dev ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/dev/ps2.c -o ./build/dev/ps2.o
+
+
 
 user_programs:
 	cd ./programs/blank && make all

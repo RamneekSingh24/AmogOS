@@ -55,7 +55,6 @@ struct task *task_new(struct process *proc) {
         tasks_ll_tail = task;
         task->prev = 0;
         task->next = 0;
-        curr_task = task;
     } else {
         tasks_ll_tail->next = task;
         task->prev = tasks_ll_tail;
@@ -106,20 +105,16 @@ int task_free(struct task *task) {
 
 int task_switch(struct task *task) {
     curr_task = task;
+    set_current_process(task->proc);
     // DESIGN INVARIANT: All the kernel memory is mapped(identity) into the task
     // page table So this is SAFE
     paging_switch(&task->page_table);
     return 0;
 }
 
-int task_page() {
-    user_registers();
-    task_switch(curr_task);
-    return 0;
-}
-
+// Run the init process
 void task_run_init_task() {
-    if (!curr_task) {
+    if (!tasks_ll_head) {
         panic("Can't start init task: no curr tasks exists\n");
     }
     task_switch(tasks_ll_head);
@@ -168,3 +163,10 @@ void *task_get_stack_item(struct task *task, int index) {
     }
     return (void *)item;
 }
+
+// NOT USED
+// int task_page() {
+//     user_registers();
+//     task_switch(curr_task);
+//     return 0;
+// }

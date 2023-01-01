@@ -36,11 +36,14 @@ struct interrupt_frame {
 } __attribute__((packed));
 
 typedef void *(*SYSCALL_HANDLER)(struct interrupt_frame *frame);
+typedef void (*INTERRUPT_CALL_BACK)(struct interrupt_frame *frame);
 
 void syscall_register_command(int command_num, SYSCALL_HANDLER hanlder);
 
 void idt_test();
 void idt_init();
+int idt_register_interrupt_call_back(int interrupt_no,
+                                     INTERRUPT_CALL_BACK call_back);
 void external_interrupts_test();
 
 #endif

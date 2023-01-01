@@ -9,5 +9,6 @@ void println(char *str);
 void print_int(int x);
 void console_init();
 void printn(char *str, int n);
+void print_char(char c);
 
 #endif

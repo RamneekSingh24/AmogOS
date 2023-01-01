@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "config.h"
 #include "console/console.h"
+#include "dev/keyboard.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
 #include "fs/file.h"
@@ -55,8 +56,8 @@ void kernel_registers();
 // DOES NOT SWITCH PAGE TABLES
 void kernel_va_switch() {
     kernel_registers();
-    // No need to load kernel page table here, kernel is already mapped
-    // paging_load_kernel_page_table();
+    // DESIGN NOTE: No need to load kernel page table here, kernel is already
+    // mapped paging_load_kernel_page_table();
 }
 
 void kernel_main() {
@@ -70,6 +71,7 @@ void kernel_main() {
     disk_init();
     idt_init();
     procs_init();
+    keyboard_init();
     register_syscalls();
 
     println("Starting first proc..");
