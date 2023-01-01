@@ -19,6 +19,26 @@ struct idt_ptr {
     uint32_t base;  // Base addr of the start of IDT
 } __attribute__((packed));
 
+struct interrupt_frame {
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebp;
+    uint32_t reserved; // esp pushed by pushad (DO NOT USE)
+    uint32_t ebx;
+    uint32_t edx;
+    uint32_t ecx;
+    uint32_t eax;
+    uint32_t eip;
+    uint32_t cs;
+    uint32_t eflags;
+    uint32_t esp; // actual esp pushed by the processor during interrupt
+    uint32_t ss;
+} __attribute__((packed));
+
+typedef void*(*SYSCALL_HANDLER)(struct interrupt_frame* frame);
+
+void syscall_register_command(int command_num, SYSCALL_HANDLER hanlder);
+
 void idt_test();
 void idt_init();
 void external_interrupts_test();

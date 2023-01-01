@@ -126,3 +126,22 @@ void task_run_init_task() {
     task_switch(tasks_ll_head);
     task_return(&tasks_ll_head->registers);
 }
+
+void task_save_current_state(struct interrupt_frame *frame) {
+    if (!curr_task) {
+        panic("Saved state called but no curr task");
+    }
+
+    curr_task->registers.eip = frame->eip;
+    curr_task->registers.cs = frame->cs;
+    curr_task->registers.eflags = frame->eflags;
+    curr_task->registers.esp = frame->esp;
+    curr_task->registers.ss = frame->ss;
+    curr_task->registers.eax = frame->eax;
+    curr_task->registers.ebp = frame->ebp;
+    curr_task->registers.ebx = frame->ebx;
+    curr_task->registers.ecx = frame->ecx;
+    curr_task->registers.edi = frame->edi;
+    curr_task->registers.edx = frame->edx;
+    curr_task->registers.esi = frame->esi;
+}

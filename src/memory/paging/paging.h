@@ -25,7 +25,7 @@ struct page_table_32b {
 };
 
 void kpaging_init();
-
+void paging_load_kernel_page_table();
 int paging_create_4gb_page_tables(uint8_t flags, struct page_table_32b *pt);
 int paging_free_page_table(struct page_table_32b *table_table);
 void paging_switch(struct page_table_32b *pt);

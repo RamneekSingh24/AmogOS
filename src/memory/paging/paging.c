@@ -229,6 +229,8 @@ void paging_switch(struct page_table_32b *pt) {
     current_pt[cpu] = pt;
 }
 
+void paging_load_kernel_page_table() { paging_switch(&kpage_table); }
+
 void kpaging_init() {
     // Creates page tables for the complete 4gb 32 bit add
     int res = paging_create_4gb_page_tables(PAGE_PRESENT | PAGE_WRITE_ALLOW,

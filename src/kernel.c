@@ -13,6 +13,7 @@
 #include "status.h"
 #include "task/process.h"
 #include "task/tss.h"
+#include "syscall/syscall.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -48,6 +49,13 @@ void gdt_init() {
     gdt_load(gdt_real, sizeof(gdt_real));
 }
 
+void kernel_registers();
+
+void kernel_va_switch() {
+    kernel_registers();
+    paging_load_kernel_page_table();
+}
+
 void kernel_main() {
 
     console_init();
@@ -59,6 +67,7 @@ void kernel_main() {
     disk_init();
     idt_init();
     procs_init();
+    register_syscalls();
 
     println("Starting first proc..");
 

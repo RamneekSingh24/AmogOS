@@ -19,6 +19,7 @@ FILES += ./build/task/task.o
 FILES += ./build/task/tss.asm.o
 FILES += ./build/task/process.o
 FILES += ./build/task/task.asm.o 
+FILES += ./build/syscall/syscall.o
 
 
 INCLUDES = -I./src
@@ -48,7 +49,8 @@ builddir:
 	mkdir -p ./build/disk
 	mkdir -p ./build/gdt
 	mkdir -p ./build/task
-	mkdir -p ./programs/build
+	mkdir -p ./build/syscall
+	mkdir -p ./programs/blank/build
 
 lint:
 	make builddir
@@ -162,6 +164,11 @@ make qemu:
 
 ./build/task/process.o: ./src/task/process.c
 	${CC} -I./src/task ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/task/process.c -o ./build/task/process.o
+
+
+./build/syscall/syscall.o: ./src/syscall/syscall.c
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/syscall.c -o ./build/syscall/syscall.o
+
 
 
 user_programs:

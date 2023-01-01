@@ -2,10 +2,12 @@ section .asm
 
 extern intr_0_handler
 extern intr_21_handler
+extern intr_80h_handler
 extern intr_generic_handler
 
 global int0h, int21h, int_generic_h
 global enable_interrupts, disable_interrupts
+global int80h
 
 
 global idt_load, test_int0, test_div0
@@ -49,6 +51,40 @@ int21h:
     iret   ; special instruction to return from interrupt and go back to where we were 
 
 
+
+int80h:
+    cli
+    ; INTERRUPT FRAME START
+    ; ALREADY PUSHED TO US BY THE PROCESSOR WHEN `int x` is called
+    ; uint32_t ip
+    ; uint32_t cs;
+    ; uint32_t flags
+    ; uint32_t sp;
+    ; uint32_t ss;
+    ; Pushes the general purpose registers to the stack
+    pushad
+    
+    ; INTERRUPT FRAME END
+
+    ; int isr80h_handler(int command, struct interrupt_frame *frame)
+    ; We need to pass the command and the interrupt frame to the handler
+    ; Push the stack pointer so that we are pointing to the interrupt frame
+    push esp
+    ; EAX holds our command lets push it to the stack for isr80h_handler
+    push eax
+    call intr_80h_handler
+
+    mov dword[tmp_res], eax
+    add esp, 8
+
+    ; Restore general purpose registers for user land
+    popad
+    mov eax, [tmp_res]
+    iretd
+
+
+
+
 ; A generic interupt handler
 int_generic_h:
 
@@ -81,3 +117,8 @@ test_div0:
     div eax
     ret
 
+
+
+
+section .data
+tmp_res: dd 0

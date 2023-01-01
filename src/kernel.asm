@@ -1,5 +1,5 @@
 [BITS 32]
-global _start
+global _start, kernel_registers
 extern kernel_main
 
 CODE_SEG equ 0x08
@@ -39,6 +39,13 @@ _start:
     jmp $
 
 
+kernel_registers:
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov gs, ax
+    mov fs, ax
+    ret   
 
 ; alignment needed for C code that follows
 times 512-($-$$) db 0 
