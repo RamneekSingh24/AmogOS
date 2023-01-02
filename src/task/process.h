@@ -7,13 +7,22 @@
 
 enum { PROC_UNUSED, PROC_BLOCKED, PROC_READY, PROC_RUNNING };
 
+enum { PROC_FILE_TYPE_ELF, PROC_FILE_TYPE_BINARY };
+
 struct process {
     uint16_t pid;
     uint8_t status;
 
     struct task *task;
 
-    void *code_data_paddr; // (code + data will be loaded contiguouly)
+    int file_type;
+
+    union {
+        void *code_data_paddr; // For binary files: (code + data will be loaded
+                               // contiguously)
+        struct elf_file *elf_file; // For elf files
+    };
+
     void *stack_paddr;
 
     uint32_t size;

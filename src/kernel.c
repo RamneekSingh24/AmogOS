@@ -43,7 +43,7 @@ void tss_init() {
 }
 
 void gdt_init() {
-    // Set the addr of tss, don't which couldn't be set a compile time
+    // Set the addr of tss, which couldn't be set at compile time
     gdt_structured[TOTAL_GDT_SEGS - 1].base = (uint32_t)&tss;
     memset(gdt_real, 0x00, sizeof(gdt_real));
     gdt_structured_to_gdt(gdt_real, gdt_structured, TOTAL_GDT_SEGS);
@@ -74,14 +74,17 @@ void kernel_main() {
     keyboard_init();
     register_syscalls();
 
-    println("Starting first proc..");
+    println("Loading first proc..");
 
     struct process *proc = 0;
-    int res = process_new("0:/blank.bin", &proc);
+    int res = process_new("0:/blank.elf", &proc);
     if (res != STATUS_OK) {
+        print("Err code: ");
         print_int(res);
-        panic("\nFailed to load blank.bin");
+        panic("\nFailed to load blank.elf");
     }
+
+    println("Loading success! Starting first proc..");
 
     task_run_init_task();
 

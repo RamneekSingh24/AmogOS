@@ -23,6 +23,8 @@ FILES += ./build/syscall/syscall.o
 FILES += ./build/syscall/user_io.o
 FILES += ./build/dev/keyboard.o
 FILES += ./build/dev/ps2.o
+FILES += ./build/loader/elf.o
+FILES += ./build/loader/elfloader.o
 
 
 INCLUDES = -I./src
@@ -54,7 +56,9 @@ builddir:
 	mkdir -p ./build/task
 	mkdir -p ./build/syscall
 	mkdir -p ./build/dev
+	mkdir -p ./build/loader
 	mkdir -p ./programs/blank/build
+	mkdir -p ./programs/stdlib/build
 
 
 detected_OS := $(shell uname)
@@ -87,7 +91,7 @@ lint:
 mkfs_linux: ./bin/boot.bin ./bin/kernel.bin user_programs
 	sudo mount -t vfat ./bin/os.bin /mnt/d
 	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/blank/blank.bin /mnt/d
+	sudo cp ./programs/blank/blank.elf /mnt/d
 	sudo umount /mnt/d
 
 make macos_setup:
@@ -215,14 +219,22 @@ make qemu:
 	${CC} -I./src/dev ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/dev/ps2.c -o ./build/dev/ps2.o
 
 
+./build/loader/elf.o: ./src/loader/elf.c
+	${CC} -I./src/loader ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/loader/elf.c -o ./build/loader/elf.o
+
+./build/loader/elfloader.o: ./src/loader/elfloader.c
+	${CC} -I./src/loader ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/loader/elfloader.c -o ./build/loader/elfloader.o
+
 
 user_programs:
+	cd ./programs/stdlib && make all
 	cd ./programs/blank && make all
 
 user_programs_clean:
+	cd ./programs/stdlib && make clean
 	cd ./programs/blank && make clean
 
-clean: user_programs_clean
+clean: user_programs_clean 
 	rm -rf ./bin/boot.bin ./bin/kernel.bin ./bin/os.bin ${FILES} ./build/kernelfull.o
 
 

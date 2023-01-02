@@ -1,7 +1,10 @@
 #include "process.h"
 #include "config.h"
+#include "console/console.h"
 #include "fs/file.h"
+#include "kernel.h"
 #include "lib/string/string.h"
+#include "loader/elfloader.h"
 #include "macros.h"
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
@@ -42,6 +45,7 @@ static int process_load_binary(const char *filename, struct process *proc) {
         goto out;
     }
 
+    proc->file_type = PROC_FILE_TYPE_BINARY;
     proc->code_data_paddr = program_data_ptr;
     proc->size = fsize;
 
@@ -51,8 +55,27 @@ out:
     return res;
 }
 
+static int process_load_elf(const char *filename, struct process *proc) {
+    int res = 0;
+    struct elf_file *elf_file = 0;
+    res = elf_load(filename, &elf_file);
+    if (res != STATUS_OK) {
+        return res;
+    }
+
+    proc->file_type = PROC_FILE_TYPE_ELF;
+    proc->elf_file = elf_file;
+
+    return STATUS_OK;
+}
+
 static int process_load_data(const char *filename, struct process *proc) {
-    return process_load_binary(filename, proc);
+    int res = process_load_elf(filename, proc);
+    if (res == STATUS_INVALID_EXEC_FORMAT) {
+        println("Could not load ELF file, trying binary format");
+        res = process_load_binary(filename, proc);
+    }
+    return res;
 }
 
 void procs_init() {
@@ -89,7 +112,7 @@ int proc_free(struct process *proc) {
 }
 
 static int process_map_binary(struct process *proc) {
-    int res = 0;
+    int res = STATUS_OK;
     struct page_table_32b *pt = &proc->task->page_table;
     void *data_start = (void *)DEFAULT_USER_PROG_ENTRY;
     void *data_end =
@@ -113,10 +136,71 @@ static int process_map_binary(struct process *proc) {
     return res;
 }
 
+// Memory Leak: Does not free any mapped segments in case of error in the middle
+static int process_map_elf(struct process *proc) {
+
+    int res = STATUS_OK;
+
+    struct page_table_32b *pt = &proc->task->page_table;
+
+    struct elf_file *elf_file = proc->elf_file;
+    struct elf_header *header = elf_header(elf_file);
+    struct elf32_phdr *phdrs = elf_pheader(header);
+    int ph_count = header->e_phnum;
+
+    for (int i = 0; i < ph_count; i++) {
+        struct elf32_phdr *ph = &phdrs[i];
+
+        void *pa_start =
+            paging_down_align_addr(elf_phdr_phys_address(elf_file, ph));
+
+        void *va_start = paging_down_align_addr((void *)ph->p_vaddr);
+        void *va_end =
+            paging_up_align_addr((void *)(ph->p_vaddr + ph->p_memsz));
+
+        int flags = PAGE_PRESENT | PAGE_USER_ACCESS_ALLOW;
+        if (ph->p_flags & PF_W) {
+            flags |= PAGE_WRITE_ALLOW;
+        }
+
+        if (va_end <= va_start) {
+            println("[Warning] process_map_elf: empty segment");
+            continue;
+        }
+
+        res = paging_map_memory_region(pt, va_start, pa_start, va_end, flags);
+        if (res != STATUS_OK) {
+            return res;
+        }
+    }
+
+    // map the stack
+
+    void *stack_start = (void *)DEFAULT_USER_STACK_START;
+    void *stack_end = (void *)DEFAULT_USER_STACK_END;
+
+    // NOTE : stack_start > stack_end
+    res = paging_map_memory_region(
+        pt, stack_end, proc->stack_paddr, stack_start,
+        PAGE_PRESENT | PAGE_WRITE_ALLOW | PAGE_USER_ACCESS_ALLOW);
+
+    return res;
+}
+
 static int process_map_memory(struct process *proc) {
     int res = 0;
-    res = process_map_binary(proc);
-
+    switch (proc->file_type) {
+    case PROC_FILE_TYPE_BINARY:
+        res = process_map_binary(proc);
+        break;
+    case PROC_FILE_TYPE_ELF:
+        res = process_map_elf(proc);
+        break;
+    default:
+        panic("process_map_memory: can't map invalid exec file type");
+        res = -STATUS_INVALID_ARG;
+        break;
+    }
     return res;
 }
 

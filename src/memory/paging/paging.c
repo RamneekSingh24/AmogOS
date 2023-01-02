@@ -275,6 +275,15 @@ int paging_map_page(struct page_table_32b *pt, uint32_t virt_addr,
     return 0;
 }
 
+// aligns addr to previous(lower) page boundary
+void *paging_down_align_addr(void *addr) {
+    if ((uint32_t)addr % PAGE_SIZE != 0) {
+        addr -= ((uint32_t)addr % PAGE_SIZE);
+    }
+    return addr;
+}
+
+// aligns addr to next(higher) page boundary
 void *paging_up_align_addr(void *addr) {
     if ((uint32_t)addr % PAGE_SIZE != 0) {
         addr += (PAGE_SIZE - ((uint32_t)addr % PAGE_SIZE));

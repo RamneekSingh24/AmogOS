@@ -2,6 +2,7 @@
 #include "config.h"
 #include "console/console.h"
 #include "kernel.h"
+#include "loader/elfloader.h"
 #include "memory/heap/kheap.h"
 #include "memory/memory.h"
 #include "process.h"
@@ -16,8 +17,9 @@ struct task *task_current() { return curr_task; }
 int task_init(struct task *task, struct process *proc) {
     memset(task, 0, sizeof(struct task));
     // For now creating a full 4GB page table for each task
-    // TODO: Everything is accessable from user space for now.
-    // Fix this when we have page fault handler
+    // TODO: Everything is mapped into the task's kernel space for now.
+    // Fix this when we have page fault handler so we only map pages for the
+    // required memory.
     int res = paging_create_4gb_page_tables(PAGE_PRESENT | PAGE_WRITE_ALLOW,
                                             &task->page_table);
     if (res != STATUS_OK) {
@@ -25,6 +27,10 @@ int task_init(struct task *task, struct process *proc) {
     }
 
     task->registers.eip = DEFAULT_USER_PROG_ENTRY;
+    if (proc->file_type == PROC_FILE_TYPE_ELF) {
+        task->registers.eip = elf_header(proc->elf_file)->e_entry;
+    }
+
     task->registers.ss = DEFAULT_USER_DATA_SEGMENT;
     task->registers.esp = DEFAULT_USER_STACK_START;
     task->registers.cs = DEFAULT_USER_CODE_SEGMENT;

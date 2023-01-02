@@ -30,6 +30,7 @@ int paging_create_4gb_page_tables(uint8_t flags, struct page_table_32b *pt);
 int paging_free_page_table(struct page_table_32b *table_table);
 void paging_switch(struct page_table_32b *pt);
 
+void *paging_down_align_addr(void *addr);
 void *paging_up_align_addr(void *addr);
 
 int paging_map_memory_region(struct page_table_32b *pt, void *data_va_start,
