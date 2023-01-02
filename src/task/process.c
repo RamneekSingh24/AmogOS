@@ -158,18 +158,6 @@ static int process_map_elf(struct process *proc) {
         void *va_end =
             paging_up_align_addr((void *)(ph->p_vaddr + ph->p_memsz));
 
-        if (ph->p_memsz == 0x8) {
-            print("hii");
-            printn((char *)(pa_start), 0x8);
-            print("boo");
-        } else {
-            for (int i = 0; i < ph->p_memsz; i++) {
-                if (strncmp((char *)(pa_start + i), "1989", 10) == 0) {
-                    print("found");
-                    print("boo");
-                }
-            }
-        }
 
         int flags = PAGE_PRESENT | PAGE_USER_ACCESS_ALLOW;
         if (ph->p_flags & PF_W) {

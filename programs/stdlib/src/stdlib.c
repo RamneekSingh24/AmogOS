@@ -93,26 +93,14 @@ void itoa(int value, char *buffer) {
 int atoi(char *buffer) {
     int res = 0;
     int sign = 1;
-    char bb[12];
-    put_char('\n');
-    itoa((int)buffer, bb);
-    print(bb, 100);
-    put_char('\n');
-    print("bug??\n", 100);
-    print("bug??2\n", 100);
 
-    if (buffer[0] == 'A') {
-        print("bug??3\n", 100);
-
+    if (buffer[0] == '-') {
         sign = -1;
         buffer++;
     }
 
     int idx = 0;
     while (buffer[idx] != 0 && idx < MAX_DIGITS) {
-        put_char(idx + '0');
-        put_char(buffer[idx]);
-        put_char('\n');
         res *= 10;
         res += buffer[idx] - '0';
         idx++;
