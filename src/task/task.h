@@ -55,6 +55,8 @@ void task_save_current_state(struct interrupt_frame *frame);
 int copy_data_from_user(void *dst, void *src, uint32_t nbytes);
 void *task_get_stack_item(struct task *task, int index);
 
+int verify_user_pointer(void *ptr);
+
 // int task_page(); NOT USED
 
 #endif

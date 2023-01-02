@@ -78,6 +78,7 @@ void println(char *str) {
     print("\n");
 }
 
+#define MAX_INT_DIGITS 12 // 32 bit int max ~(2e9) = 10 digits + sign + null
 void print_int(int x) {
     if (x < 0) {
         print("-");
@@ -95,14 +96,13 @@ void print_int(int x) {
         return;
     }
     x = cx;
-    int p10 = 1;
+    char buf[MAX_INT_DIGITS];
     for (int i = 0; i < num_digits; i++) {
-        p10 *= 10;
+        buf[i] = '0' + x % 10;
+        x /= 10;
     }
-    for (int i = 0; i < num_digits; i++) {
-        p10 /= 10;
-        int d = x / p10;
-        console_write_char('0' + d, 15);
-        x -= d * p10;
+
+    for (int j = num_digits - 1; j >= 0; j--) {
+        console_write_char(buf[j], 15);
     }
 }

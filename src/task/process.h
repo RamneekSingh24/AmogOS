@@ -31,7 +31,8 @@ struct process {
 
     char program_file[FS_MAX_PATH_LEN + 10];
 
-    void *vmem_blocks[PROCESS_VMEM_VMEM_MAX_BLOCK_COUNT];
+    void *vmem_blocks_start[PROCESS_VMEM_MAX_BLOCKS];
+    void *vmem_blocks_end[PROCESS_VMEM_MAX_BLOCKS];
     int open_files[PROCESS_MAX_OPEN_FILES];
 
     struct keyboard_buffer {

@@ -1,6 +1,7 @@
 #include "paging.h"
 #include "config.h"
 #include "console/console.h"
+#include "invariants.h"
 #include "kernel.h"
 #include "memory/heap/kheap.h"
 #include "status.h"
@@ -113,10 +114,18 @@ int paging_new_vpn_to_pfn(struct page_table_32b *pt, uint32_t vpn, uint32_t pfn,
     return STATUS_OK;
 }
 
+// TODO: add more tlb flush functions
+
+// Flushes the tlb for the given virtual address
+static inline void __native_flush_tlb_single(unsigned int addr) {
+    asm volatile("invlpg (%0)" ::"r"(addr) : "memory");
+}
+
 // Free the frame mapping to the vpn
 // Zeroes out the pte
 // DESIGN INVARIANT: No Shared Pages
 int paging_free_vpn(struct page_table_32b *pt, uint32_t vpn) {
+    assert_no_page_sharing();
     int dir_idx = vpn >> 10;
     uint32_t pte = pt->cr3[dir_idx];
     if ((pte & PAGE_PRESENT) == 0) {
@@ -134,7 +143,13 @@ int paging_free_vpn(struct page_table_32b *pt, uint32_t vpn) {
     if (paddr) {
         kfree(paddr); // DESIGN INVARIANT: NO SHARED PAGES
     }
+
     second_level_pt[second_level_pt_idx] = 0x00;
+
+    // Very important: flush the tlb
+    assert_single_cpu(); // Doesn't work on SMP
+    __native_flush_tlb_single(vpn * PAGE_SIZE);
+
     return 0;
 }
 
@@ -197,6 +212,7 @@ int paging_free_page_table(struct page_table_32b *pt) {
 // inputs should be page aligned
 // ** DOES NOT FREE UP PAGE TABLES **
 // User should call paging_free_page_table(..)
+// This should work even if the physical memory is not contiguous
 int paging_free_va(struct page_table_32b *pt, uint32_t vaddr_start,
                    uint32_t vaddr_end) {
     if (vaddr_end < vaddr_start) {

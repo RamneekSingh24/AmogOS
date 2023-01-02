@@ -1,5 +1,8 @@
+CC = i686-elf-gcc
+
 FILES = ./build/start.o
 FILES += ./build/os.o
+FILES += ./build/stdlib.o
 
 INCLUDES=-I./src -I./include
 
@@ -11,6 +14,9 @@ all: ${FILES}
 
 ./build/os.o: ./src/os.asm
 	nasm -f elf ./src/os.asm -o ./build/os.o
+
+./build/stdlib.o: ./src/stdlib.c
+	${CC} ${INCLUDES} ${FLAGS} -std=gnu99 -c -g ./src/stdlib.c -o ./build/stdlib.o 
 
 clean:
 	rm -rf ${FILES}

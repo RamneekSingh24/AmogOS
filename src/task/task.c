@@ -158,6 +158,14 @@ int copy_data_from_user(void *dst, void *src, uint32_t nbytes) {
     return STATUS_OK;
 };
 
+// checks if ptr is in user space
+int verify_user_pointer(void *ptr) {
+    if (((uint32_t)ptr) < KHEAP_SAFE_BOUNDARY) {
+        return -STATUS_INVALID_USER_MEM_ACCESS;
+    }
+    return STATUS_OK;
+}
+
 // ASSUME: all items are 4 bytes
 void *task_get_stack_item(struct task *task, int index) {
     uint32_t *stack = (uint32_t *)task->registers.esp;

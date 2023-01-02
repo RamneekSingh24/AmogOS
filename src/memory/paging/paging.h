@@ -39,4 +39,7 @@ int paging_map_memory_region(struct page_table_32b *pt, void *data_va_start,
 
 void test_paging_set();
 
+int paging_free_va(struct page_table_32b *pt, uint32_t vaddr_start,
+                   uint32_t vaddr_end);
+
 #endif

@@ -62,6 +62,9 @@ void interrupt_handler(int interrupt_no, struct interrupt_frame *frame) {
     if (interrupt_call_backs[interrupt_no] != 0) {
         interrupt_call_backs[interrupt_no](frame);
     } else {
+        if (interrupt_no == 0xE) {
+            panic("page fault");
+        }
         // panic("Unhandled interrupt");
         port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
     }

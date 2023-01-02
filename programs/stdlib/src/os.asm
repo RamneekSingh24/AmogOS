@@ -1,8 +1,12 @@
 [BITS 32]
 
+section .asm
+
 global print:function
 global get_key:function
 global put_char:function
+global mmap:function
+global munmap:function
 
 ; void print(const char* str, int len)
 print:
@@ -39,6 +43,35 @@ put_char:
     mov eax, 3
     int 0x80
     add esp, 4 ; pop c
+
+    pop ebp
+    ret
+
+
+;int mmap(void* va_start, void* va_end, int flags);
+mmap:
+    push ebp
+    mov ebp, esp
+
+    push dword[ebp+8] ; va_start
+    push dword[ebp+12] ; va_end
+    push dword[ebp+16] ; flags
+    mov eax, 4 ; mmap syscall 
+    int 0x80
+    add esp, 12 ; pop va_start, va_end, flags
+
+    pop ebp
+    ret
+
+;int munmap(void* va_start);
+munmap:
+    push ebp
+    mov ebp, esp
+
+    push dword[ebp+8] ; va_start
+    mov eax, 5 ; munmap syscall 
+    int 0x80
+    add esp, 4 ; pop va_start
 
     pop ebp
     ret

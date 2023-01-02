@@ -19,4 +19,6 @@ void register_syscalls() {
     syscall_register_command(SYS_CALL1_PRINT, syscall_print);
     syscall_register_command(SYS_CALL2_GET_CHAR, syscall_get_char);
     syscall_register_command(SYS_CALL3_PUT_CHAR, syscall_put_char);
+    syscall_register_command(SYS_CALL4_MMAP, syscall_mmap);
+    syscall_register_command(SYS_CALL5_MUNMAP, syscall_munmap);
 }

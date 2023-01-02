@@ -168,6 +168,7 @@ int elf_load(const char *filename, struct elf_file **file_out) {
     // NOTE: 0 is invalid fd
     if (res <= 0) {
         kfree(elf_file);
+        res = -STATUS_IO_ERROR;
         return res;
     }
 

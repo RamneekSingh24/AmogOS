@@ -21,10 +21,12 @@ FILES += ./build/task/process.o
 FILES += ./build/task/task.asm.o 
 FILES += ./build/syscall/syscall.o
 FILES += ./build/syscall/user_io.o
+FILES += ./build/syscall/umem.o
 FILES += ./build/dev/keyboard.o
 FILES += ./build/dev/ps2.o
 FILES += ./build/loader/elf.o
 FILES += ./build/loader/elfloader.o
+
 
 
 INCLUDES = -I./src
@@ -35,7 +37,7 @@ build: ${FILES}
 	./build.sh
 
 format:
-	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
+	find ./ -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
 
 builddir:
 	mkdir -p ./bin
@@ -225,6 +227,8 @@ make qemu:
 ./build/loader/elfloader.o: ./src/loader/elfloader.c
 	${CC} -I./src/loader ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/loader/elfloader.c -o ./build/loader/elfloader.o
 
+./build/syscall/umem.o:
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/umem.c -o ./build/syscall/umem.o
 
 user_programs:
 	cd ./programs/stdlib && make all
