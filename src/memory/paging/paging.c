@@ -94,9 +94,13 @@ int paging_new_vpn_to_pfn(struct page_table_32b *pt, uint32_t vpn, uint32_t pfn,
         if (overwrite) {
             // free up old page: DESIGN INVARIANT: No Page Sharing
             void *page_addr = (void *)(pte & PAGE_FRAME_LOC_MASK);
-            // TODO: FIXME: Do not free the page: this is a bug
+            // TODO: FIXME: Do not free the page
+            // since kernel pages are shared by all
+            // which we do not want to free.
+            // wait until shared pages are introduced
+            // and only then free pages
             if (page_addr) {
-                // kfree(page_addr); 
+                // kfree(page_addr);
             }
         } else {
             return -STATUS_INVALID_ARG;
