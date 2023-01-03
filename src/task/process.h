@@ -7,6 +7,8 @@
 
 enum { PROC_FILE_TYPE_ELF, PROC_FILE_TYPE_BINARY };
 
+enum { PROC_UNUSED, PROC_CREATING, PROC_CAN_START };
+
 struct process {
     uint16_t pid;
     uint8_t status;
