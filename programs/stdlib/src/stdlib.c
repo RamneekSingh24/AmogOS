@@ -64,7 +64,7 @@ void free(void *ptr) {
 // ----------------- Heap implementation end ------------ //
 
 // ----------------- String functions start ------------------- //
-#define MAX_DIGITS 12 // 32-bit int max digits (10)
+#define MAX_DIGITS 13 // 32-bit int max digits (10)
 
 void itoa(int value, char *buffer) {
     int idx = 0;
@@ -81,6 +81,7 @@ void itoa(int value, char *buffer) {
     }
     if (num_digits == 0) {
         buffer[idx++] = '0';
+        buffer[idx] = 0;
         return;
     }
     char buf[MAX_DIGITS];
@@ -91,7 +92,7 @@ void itoa(int value, char *buffer) {
     for (int i = num_digits - 1; i >= 0; i--) {
         buffer[idx++] = buf[i];
     }
-    buffer[num_digits] = 0;
+    buffer[idx] = 0;
 }
 
 int atoi(char *buffer) {
@@ -228,13 +229,11 @@ void str_to_lower(char *str) {
 // Perhaps the kernel is not initializing the .bss section correctly[Indeed it
 // wasn't]
 char *sp = 0;
-int xxy = 198913;
 
 // Not thread safe
 char *strtok(char *str, const char *delimiters) {
     int i = 0;
     int len = strlen(delimiters);
-    printf("xxy: %d\n", xxy);
     if (!str && !sp) {
         return 0;
     }
