@@ -87,12 +87,12 @@ static SYSCALL_HANDLER sys_calls[NUM_SYS_CALLS];
 
 void *syscall_handle_command(int command, struct interrupt_frame *frame) {
     if (command < 0 || command >= NUM_SYS_CALLS) {
-        return (void*) -SYSCALL_NOT_IMPLEMENTED;
+        return (void *)-SYSCALL_NOT_IMPLEMENTED;
     }
 
     SYSCALL_HANDLER sys_call = sys_calls[command];
     if (!sys_call) {
-        return (void*) -SYSCALL_NOT_IMPLEMENTED;
+        return (void *)-SYSCALL_NOT_IMPLEMENTED;
     }
 
     return sys_call(frame);

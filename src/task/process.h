@@ -5,14 +5,13 @@
 #include "task/task.h"
 #include <stdint.h>
 
-enum { PROC_UNUSED, PROC_BLOCKED, PROC_READY, PROC_RUNNING };
-
 enum { PROC_FILE_TYPE_ELF, PROC_FILE_TYPE_BINARY };
 
 struct process {
     uint16_t pid;
     uint8_t status;
 
+    // main thread of the process
     struct task *task;
 
     int file_type;
@@ -23,6 +22,9 @@ struct process {
         struct elf_file *elf_file; // For elf files
     };
 
+    // stack of the main thread
+    // physical addr of bottom(lower), not top of the stack
+    // stack actually starts at stack_paddr + DEFAULT_USER_STACK_SIZE
     void *stack_paddr;
 
     uint32_t size;
@@ -46,5 +48,5 @@ void procs_init();
 int process_new(const char *filename, struct process **process_out);
 void set_current_process(struct process *proc);
 struct process *process_current();
-
+int process_add_arguments(struct process *proc, int argc, int len, char *args);
 #endif

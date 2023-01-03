@@ -89,17 +89,20 @@ cls:
     pop ebp
     ret
 
-; int create_proccess(const char* file_path, int argc, char** argv);
+
+; int create_proccess(const char* file_path, int argc, int len, char* args);
 create_proccess:
     push ebp
     mov ebp, esp
 
     push dword[ebp+8] ; file_path
     push dword[ebp+12] ; argc
-    push dword[ebp+16] ; argv
+    push dword[ebp+16] ; len
+    push dword[ebp+20] ; args
+
     mov eax, 7 ; create_proccess syscall 
     int 0x80
-    add esp, 12 ; pop file_path, argc, argv
+    add esp, 16 ; pop file_path, argc, len, args
 
     pop ebp
     ret

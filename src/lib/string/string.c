@@ -1,5 +1,6 @@
 #include "string.h"
 
+// Doesn't include the null terminator
 int strlen(const char *str) {
     int i = 0;
     while (str[i] != '\0') {

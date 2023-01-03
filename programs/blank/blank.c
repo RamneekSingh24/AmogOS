@@ -45,7 +45,16 @@ void screen() {
 }
 
 int main(int argc, char **argv) {
-    print("Greetings! you started blank.c\n", 100);
+    print("Greetings! you started blank.c and passed the args listed below\n",
+          100);
+
+    printf("&argc: %p\n", &argc);
+    printf("&argv: %p\n", &argv);
+    printf("argc: %d\n", argc);
+    printf("argv: %p\n", argv);
+    for (int i = 0; i < argc; i++) {
+        printf("argv[%d]:  %s\n", i, argv[i]);
+    }
 
     while (1) {
     };

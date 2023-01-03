@@ -84,6 +84,8 @@ void kernel_main() {
         panic("\nFailed to load shell");
     }
 
+    process_add_arguments(proc, 3, 22, "0:/shell\0Amogos\0Shell\0");
+
     println("Loading success! Starting first proc..");
 
     task_run_init_task();

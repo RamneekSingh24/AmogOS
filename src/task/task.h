@@ -7,6 +7,8 @@
 #include "memory/paging/paging.h"
 #include <stdbool.h>
 
+enum { TASK_RUNNING, TASK_BLOCKED, TASK_READY, TASK_DEAD };
+
 struct registers {
     uint32_t edi;
     uint32_t esi;
