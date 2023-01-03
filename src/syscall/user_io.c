@@ -30,3 +30,8 @@ void *syscall_put_char(struct interrupt_frame *frame) {
     print_char(c);
     return 0;
 }
+
+void *syscall_clear_screen(struct interrupt_frame *frame) {
+    clear_screen();
+    return 0;
+}
