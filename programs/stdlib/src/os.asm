@@ -7,6 +7,7 @@ global get_key:function
 global put_char:function
 global mmap:function
 global munmap:function
+global cls:function
 
 ; void print(const char* str, int len)
 print:
@@ -72,6 +73,17 @@ munmap:
     mov eax, 5 ; munmap syscall 
     int 0x80
     add esp, 4 ; pop va_start
+
+    pop ebp
+    ret
+
+;void clear_screen();
+cls:
+    push ebp
+    mov ebp, esp
+
+    mov eax, 6 ; clear_screen syscall 
+    int 0x80
 
     pop ebp
     ret

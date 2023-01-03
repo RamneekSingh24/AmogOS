@@ -60,6 +60,7 @@ builddir:
 	mkdir -p ./build/dev
 	mkdir -p ./build/loader
 	mkdir -p ./programs/blank/build
+	mkdir -p ./programs/shell/build
 	mkdir -p ./programs/stdlib/build
 
 
@@ -93,7 +94,8 @@ lint:
 mkfs_linux: ./bin/boot.bin ./bin/kernel.bin user_programs
 	sudo mount -t vfat ./bin/os.bin /mnt/d
 	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/blank/blank.elf /mnt/d
+	sudo cp ./programs/blank/blank.elf /mnt/d/blank
+	sudo cp ./programs/shell/shell.elf /mnt/d/shell
 	sudo umount /mnt/d
 
 make macos_setup:
@@ -233,10 +235,12 @@ make qemu:
 user_programs:
 	cd ./programs/stdlib && make all
 	cd ./programs/blank && make all
+	cd ./programs/shell && make all
 
 user_programs_clean:
 	cd ./programs/stdlib && make clean
 	cd ./programs/blank && make clean
+	cd ./programs/shell && make clean
 
 clean: user_programs_clean 
 	rm -rf ./bin/boot.bin ./bin/kernel.bin ./bin/os.bin ${FILES} ./build/kernelfull.o

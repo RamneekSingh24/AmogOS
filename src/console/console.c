@@ -106,3 +106,14 @@ void print_int(int x) {
         console_write_char(buf[j], 15);
     }
 }
+
+void clear_screen() {
+    println("Clearing screen...");
+    for (int y = 0; y < VGA_HEIGHT; y++) {
+        for (int x = 0; x < VGA_WIDTH; x++) {
+            video_mem[VGA_WIDTH * y + x] = make_char(' ', 0);
+        }
+    }
+    curr_x = 0;
+    curr_y = 0;
+}

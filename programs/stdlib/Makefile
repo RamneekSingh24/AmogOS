@@ -1,10 +1,15 @@
 CC = i686-elf-gcc
 
+# FLAGS = -g -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce 
+# FLAGS += -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin
+# FLAGS += -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter
+# FLAGS += -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
+
 FILES = ./build/start.o
 FILES += ./build/os.o
 FILES += ./build/stdlib.o
 
-INCLUDES=-I./src -I./include
+INCLUDES= -I./src -I./
 
 all: ${FILES}
 	i686-elf-ld -m elf_i386 -relocatable ${FILES} -o ./stdlib.elf

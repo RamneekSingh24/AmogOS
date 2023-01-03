@@ -77,11 +77,11 @@ void kernel_main() {
     println("Loading first proc..");
 
     struct process *proc = 0;
-    int res = process_new("0:/blank.elf", &proc);
+    int res = process_new("0:/shell", &proc);
     if (res != STATUS_OK) {
         print("Err code: ");
         print_int(res);
-        panic("\nFailed to load blank.elf");
+        panic("\nFailed to load shell");
     }
 
     println("Loading success! Starting first proc..");

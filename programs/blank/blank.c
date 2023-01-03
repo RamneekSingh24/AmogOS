@@ -1,9 +1,8 @@
 #include "include/stdio.h"
 #include "include/stdlib.h"
 
-int main(int argc, char **argv) {
-    print("Greetings! you are inside a terminal written in C\n", 100);
-
+void screen() {
+    printf("Yo %d\n", 123);
     while (1) {
         int c = get_key();
         if (c == 0) {
@@ -26,7 +25,7 @@ int main(int argc, char **argv) {
                 put_char('\n');
             }
         }
-        if (c == 'A') {
+        if (c == 'P') {
             *(int *)0x100000 = 32; // crash
         }
         if (c == 'I') {
@@ -42,6 +41,13 @@ int main(int argc, char **argv) {
             print(buf2, 100);
             put_char('\n');
         }
+    };
+}
+
+int main(int argc, char **argv) {
+    print("Greetings! you started blank.c\n", 100);
+
+    while (1) {
     };
     return 0;
 }
