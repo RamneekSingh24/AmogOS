@@ -151,13 +151,42 @@ static int process_map_elf(struct process *proc) {
     for (int i = 0; i < ph_count; i++) {
         struct elf32_phdr *ph = &phdrs[i];
 
+        if (ph->p_type != PT_LOAD) {
+            continue;
+        }
+
         void *pa_start =
             paging_down_align_addr(elf_phdr_phys_address(elf_file, ph));
+
+        if (ph->p_memsz == 0) {
+            println("[Warning] process_map_elf: empty segment");
+            continue;
+        }
+
+        if (ph->p_filesz != ph->p_memsz) {
+            if (ph->p_filesz > ph->p_memsz) {
+                panic("process_map_elf: invalid segment, p_filesz > p_memsz");
+            }
+
+            pa_start = kzalloc(ph->p_memsz);
+            if (!pa_start) {
+                return -STATUS_NOT_ENOUGH_MEM;
+            }
+            // If segement's memory size mem_size is greater than its file size
+            // then the "extra" bytes are defined to hold the value 0 and
+            // the bytes from the file are mapped to the beginning of the
+            // memory segment.
+            // Source:
+            // https://www.cs.cmu.edu/afs/cs/academic/class/15213-f00/docs/elf.pdf
+            // Page 34
+            memcpy(pa_start, elf_phdr_phys_address(elf_file, ph), ph->p_filesz);
+
+            // TODO: Memory leak : Don't forget to free this memory
+        }
 
         void *va_start = paging_down_align_addr((void *)ph->p_vaddr);
         void *va_end =
             paging_up_align_addr((void *)(ph->p_vaddr + ph->p_memsz));
-
 
         int flags = PAGE_PRESENT | PAGE_USER_ACCESS_ALLOW;
         if (ph->p_flags & PF_W) {
