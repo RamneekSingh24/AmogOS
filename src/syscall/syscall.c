@@ -22,4 +22,5 @@ void register_syscalls() {
     syscall_register_command(SYS_CALL4_MMAP, syscall_mmap);
     syscall_register_command(SYS_CALL5_MUNMAP, syscall_munmap);
     syscall_register_command(SYS_CALL6_CLEAR_SCREEN, syscall_clear_screen);
+    syscall_register_command(SYS_CALL7_CREATE_PROCESS, syscall_create_process);
 }

@@ -117,13 +117,18 @@ int task_switch(struct task *task) {
     return 0;
 }
 
+int task_switch_and_run(struct task *task) {
+    task_switch(task);
+    task_return(&task->registers);
+    return 0;
+}
+
 // Run the init process
 void task_run_init_task() {
     if (!tasks_ll_head) {
         panic("Can't start init task: no curr tasks exists\n");
     }
-    task_switch(tasks_ll_head);
-    task_return(&tasks_ll_head->registers);
+    task_switch_and_run(tasks_ll_head);
 }
 
 void task_save_current_state(struct interrupt_frame *frame) {

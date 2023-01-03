@@ -10,6 +10,7 @@ enum SYS_CALLS {
     SYS_CALL4_MMAP,
     SYS_CALL5_MUNMAP,
     SYS_CALL6_CLEAR_SCREEN,
+    SYS_CALL7_CREATE_PROCESS,
 };
 
 void *syscall_print(struct interrupt_frame *frame);
@@ -18,5 +19,8 @@ void *syscall_put_char(struct interrupt_frame *frame);
 void *syscall_mmap(struct interrupt_frame *frame);
 void *syscall_munmap(struct interrupt_frame *frame);
 void *syscall_clear_screen(struct interrupt_frame *frame);
+
+// Windows style process creation, for now we don't have fork and exec
+void *syscall_create_process(struct interrupt_frame *frame);
 
 #endif

@@ -22,6 +22,7 @@ FILES += ./build/task/task.asm.o
 FILES += ./build/syscall/syscall.o
 FILES += ./build/syscall/user_io.o
 FILES += ./build/syscall/umem.o
+FILES += ./build/syscall/proc_mgmt.o
 FILES += ./build/dev/keyboard.o
 FILES += ./build/dev/ps2.o
 FILES += ./build/loader/elf.o
@@ -231,6 +232,10 @@ make qemu:
 
 ./build/syscall/umem.o:
 	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/umem.c -o ./build/syscall/umem.o
+
+./build/syscall/proc_mgmt.o:
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/proc_mgmt.c -o ./build/syscall/proc_mgmt.o
+
 
 user_programs:
 	cd ./programs/stdlib && make all

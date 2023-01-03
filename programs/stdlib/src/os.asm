@@ -8,6 +8,7 @@ global put_char:function
 global mmap:function
 global munmap:function
 global cls:function
+global create_proccess:function
 
 ; void print(const char* str, int len)
 print:
@@ -84,6 +85,21 @@ cls:
 
     mov eax, 6 ; clear_screen syscall 
     int 0x80
+
+    pop ebp
+    ret
+
+; int create_proccess(const char* file_path, int argc, char** argv);
+create_proccess:
+    push ebp
+    mov ebp, esp
+
+    push dword[ebp+8] ; file_path
+    push dword[ebp+12] ; argc
+    push dword[ebp+16] ; argv
+    mov eax, 7 ; create_proccess syscall 
+    int 0x80
+    add esp, 12 ; pop file_path, argc, argv
 
     pop ebp
     ret
