@@ -146,7 +146,8 @@ int paging_free_vpn(struct page_table_32b *pt, uint32_t vpn) {
     }
     void *paddr = (void *)(second_level_pte & PAGE_FRAME_LOC_MASK);
     if (paddr) {
-        kfree(paddr); // DESIGN INVARIANT: NO SHARED PAGES
+        // NO FREEING FOR NOW
+        // kfree(paddr); // DESIGN INVARIANT: NO SHARED PAGES
     }
 
     second_level_pt[second_level_pt_idx] = 0x00;
@@ -191,7 +192,8 @@ int paging_alloc_mapping(struct page_table_32b *pt, uint32_t vaddr_start,
             for (int j = start_vpn; j < i; j++) {
                 paging_free_vpn(pt, j);
             }
-            kfree((uint32_t *)new_paddr);
+            // NO FREEING FOR NOW
+            // kfree((uint32_t *)new_paddr);
             return res;
         }
     }
