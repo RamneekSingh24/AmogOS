@@ -7,10 +7,15 @@
 
 enum { PROC_FILE_TYPE_ELF, PROC_FILE_TYPE_BINARY };
 
-enum { PROC_UNUSED, PROC_CREATING, PROC_CAN_START };
+enum { PROC_UNUSED, PROC_CREATING, PROC_CAN_START, PROC_ZOMBIE };
+
+#define PROC_WAIT_NONE -1
 
 struct process {
     uint16_t pid;
+    uint16_t parent_pid;
+    int exit_status;
+
     uint8_t status;
 
     // main thread of the process
@@ -50,5 +55,12 @@ void procs_init();
 int process_new(const char *filename, struct process **process_out);
 void set_current_process(struct process *proc);
 struct process *process_current();
+int process_exit(struct process *proc, int status);
+int process_waitpid(struct process *proc, int waitpid);
 int process_add_arguments(struct process *proc, int argc, int len, char *args);
+int process_add_vmem_block(struct process *proc, void *va_start, void *va_end);
+int process_get_vmem_block(struct process *proc, void *va_start);
+int process_free_vmem_block(struct process *proc, void *va_start);
+void process_set_parent_pid(struct process *proc, int pid);
+
 #endif

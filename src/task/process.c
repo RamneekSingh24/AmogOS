@@ -2,6 +2,7 @@
 #include "config.h"
 #include "console/console.h"
 #include "fs/file.h"
+#include "invariants.h"
 #include "kernel.h"
 #include "lib/string/string.h"
 #include "loader/elfloader.h"
@@ -89,6 +90,10 @@ static void process_init(struct process *process) {
     memset(process, 0, sizeof(struct process));
 }
 
+void process_set_parent_pid(struct process *proc, int pid) {
+    proc->parent_pid = pid;
+}
+
 struct process *current_process() { return current_proc; }
 
 int get_free_slot() {
@@ -100,14 +105,90 @@ int get_free_slot() {
     return -1;
 }
 
-int proc_free(struct process *proc) {
+int free_pid_slot(int pid) {
+    for (int i = 0; i < MAX_PROCS; i++) {
+        if (procs[i].pid == pid) {
+            procs[i].status = PROC_UNUSED;
+            process_init(procs + i);
+            return STATUS_OK;
+        }
+    }
+    return -STATUS_INVALID_ARG;
+}
+
+struct process *get_proc_by_pid(int pid) {
+    for (int i = 0; i < MAX_PROCS; i++) {
+        if (procs[i].pid == pid) {
+            return procs + i;
+        }
+    }
+    return 0;
+}
+
+// Try to reap process if it is zombie and parent is waiting on it
+// returns 0 if process was reaped, -STATUS_PROC_NOT_ZOMBIE if not
+int process_reap(struct process *proc) {
+    if (proc->status == PROC_ZOMBIE) {
+        task_free(proc->task);
+        free_pid_slot(proc->pid);
+        return STATUS_OK;
+    }
+    return -STATUS_PROC_NOT_ZOMBIE;
+}
+
+// Tries to reap if waitpid is my child and it is zombie
+// returns O if process was reaped, -error otherwise
+int process_waitpid(struct process *proc, int waitpid) {
+    struct process *waitproc = get_proc_by_pid(waitpid);
+    if (!waitproc || waitproc->parent_pid != proc->pid) {
+        return -STATUS_INVALID_ARG;
+    }
+    return process_reap(waitproc);
+}
+
+int process_exit(struct process *proc, int status) {
     if (!proc) {
         return 0;
     }
-    if (proc->task) {
-        task_free(proc->task);
+    assert_single_task_per_process();
+
+    // Note: Do not free the task as we may be in the kernel context of the task
+    // itself Free the task in reap, where we will be sure that we are not in
+    // this task's context if (proc->task) {
+    //     task_free(proc->task);
+    // }
+    proc->task->state = TASK_DEAD;
+
+    // TODO: We should not use these kind of freeing as pages may be swapped out
+    // For now though this is fine. Change this later to paging_free_va,
+    // when we introduce separate heap for user processes.
+
+    // safe to free all of this because we running in the global kernel stack
+    // or kstack of the proc
+    if (proc->file_type == PROC_FILE_TYPE_BINARY) {
+        kfree(proc->code_data_paddr);
+    } else if (proc->file_type == PROC_FILE_TYPE_ELF) {
+        kfree(elf_memory(proc->elf_file));
     }
-    // TODO
+
+    for (int i = 0; i < PROCESS_VMEM_MAX_BLOCKS; i++) {
+        if (proc->vmem_blocks_start[i] != 0) {
+            process_free_vmem_block(proc, proc->vmem_blocks_start[i]);
+        }
+    }
+
+    if (proc->stack_paddr) {
+        kfree(proc->stack_paddr);
+    }
+
+    if (proc == current_proc) {
+        current_proc = 0;
+    }
+
+    // waiting for parent to reap
+    proc->status = PROC_ZOMBIE;
+    proc->exit_status = status;
+
     return 0;
 }
 
@@ -134,6 +215,45 @@ static int process_map_binary(struct process *proc) {
         PAGE_PRESENT | PAGE_WRITE_ALLOW | PAGE_USER_ACCESS_ALLOW);
 
     return res;
+}
+
+int process_add_vmem_block(struct process *proc, void *va_start, void *va_end) {
+    for (int i = 0; i < PROCESS_VMEM_MAX_BLOCKS; i++) {
+        if (proc->vmem_blocks_start[i] == 0) {
+            proc->vmem_blocks_start[i] = va_start;
+            proc->vmem_blocks_end[i] = va_end;
+            return i;
+        }
+    }
+    return -STATUS_OUT_OF_VMEM_BLOCKS;
+}
+
+int process_get_vmem_block(struct process *proc, void *va_start) {
+    for (int i = 0; i < PROCESS_VMEM_MAX_BLOCKS; i++) {
+        if (proc->vmem_blocks_start[i] == va_start) {
+            return i;
+        }
+    }
+    return -STATUS_INVALID_ARG;
+}
+
+int process_free_vmem_block(struct process *proc, void *va_start) {
+    int block_id = process_get_vmem_block(proc, va_start);
+    if (block_id < 0) {
+        return block_id;
+    }
+    // should loop over all tasks and free and do tlb shootdown
+    // but for now we support only 1 task per process
+    struct page_table_32b *pt = &proc->task->page_table;
+    void *va_end = proc->vmem_blocks_end[block_id];
+
+    // TODO: For now this does not free anything actually,
+    // freeing is deferred until shared pages are introduced
+    paging_free_va(pt, (uint32_t)va_start, (uint32_t)va_end);
+
+    proc->vmem_blocks_start[block_id] = 0;
+    proc->vmem_blocks_end[block_id] = 0;
+    return STATUS_OK;
 }
 
 // Memory Leak: Does not free any mapped segments in case of error in the middle
@@ -181,7 +301,9 @@ static int process_map_elf(struct process *proc) {
             // Page 34
             memcpy(pa_start, elf_phdr_phys_address(elf_file, ph), ph->p_filesz);
 
-            // TODO: Memory leak : Don't forget to free this memory
+            // Don't forget to free this memory
+            // Done: memory added as a vmem heap block
+            process_add_vmem_block(proc, pa_start, pa_start + ph->p_memsz);
         }
 
         void *va_start = paging_down_align_addr((void *)ph->p_vaddr);
@@ -197,6 +319,14 @@ static int process_map_elf(struct process *proc) {
             println("[Warning] process_map_elf: empty segment");
             continue;
         }
+
+        // TODO: For now most of the times pa_start is part of the elf_file
+        // which we copied into memory Later on we would want to use a separate
+        // heap for processes and only map memory from there and not from the
+        // elf_file. So than we can manage swapping and freeing out of memory.
+
+        // TODO: memory leak, don't forget to free the elf_file_memory somewhere
+        // else when we do that, for now it is freed in process_free
 
         res = paging_map_memory_region(pt, va_start, pa_start, va_end, flags);
         if (res != STATUS_OK) {
@@ -284,13 +414,15 @@ int process_new(const char *filename, struct process **process_out) {
     }
     proc->keyboard.head = 0;
     proc->keyboard.tail = 0;
+    proc->pid = pid;
     proc->status = PROC_CREATING;
     memset(proc->keyboard.buf, 0, sizeof(proc->keyboard.buf));
     *process_out = proc;
 
 out:
     if (ISERR(res)) {
-        proc_free(proc);
+        // TODO: free memory
+        // proc_free(proc);
     }
     return res;
 }

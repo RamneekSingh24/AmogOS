@@ -56,7 +56,8 @@ int main(int argc, char **argv) {
         printf("argv[%d]:  %s\n", i, argv[i]);
     }
 
-    while (1) {
-    };
+    printf("BLANK: I am going to page fault now\n");
+    int x = *(int *)0x30; // page fault
+    printf("x=%d\n", x);
     return 0;
 }

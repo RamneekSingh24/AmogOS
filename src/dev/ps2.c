@@ -15,6 +15,8 @@
 
 #define PS2_KEY_RELEASED 0x80
 
+#define PS2_KEYBOARD_CAPSLOCK 0x3A
+
 int ps2_init();
 
 static uint8_t keyboard_scan_set_one[] = {
@@ -37,7 +39,13 @@ uint8_t ps2_scancode_to_char(uint8_t scancode) {
     if (scancode > sizeof(keyboard_scan_set_one) / sizeof(uint8_t)) {
         return 0x00;
     }
-    return keyboard_scan_set_one[scancode];
+    char c = keyboard_scan_set_one[scancode];
+    if (keyboard_get_capslock(&ps2_keyboard) == KEYBOARD_STATE_CAPS_OFF) {
+        if (c >= 'A' && c <= 'Z') {
+            c += 'a' - 'A';
+        }
+    }
+    return c;
 }
 
 void keyboard_intr_handler(struct interrupt_frame *frame) {
@@ -47,11 +55,14 @@ void keyboard_intr_handler(struct interrupt_frame *frame) {
     if (scancode & PS2_KEY_RELEASED) {
         goto out;
     }
+    if (scancode == PS2_KEYBOARD_CAPSLOCK) {
+        keyboard_toggle_capslock(&ps2_keyboard);
+        // goto out;
+        // TODO: Should we pass the capslock keypress to the userspace?
+    }
+
     uint8_t c = ps2_scancode_to_char(scancode);
     if (c != 0x00) {
-        // println("kb pressed");
-        // char str[2] = {c, 0};
-        // println(str);
         keyboard_push(c, process_current());
     }
 
@@ -61,8 +72,10 @@ out:
 }
 
 int ps2_init() {
-    port_io_out_byte(PS2_COMMAND_PORT, 0xAE); // Enable first PS/2 port
     idt_register_interrupt_call_back(ISR_KEYBOARD_INTERRUPT,
                                      keyboard_intr_handler);
+
+    keyboard_set_capslock(&ps2_keyboard, KEYBOARD_STATE_CAPS_OFF);
+    port_io_out_byte(PS2_COMMAND_PORT, 0xAE); // Enable first PS/2 port
     return 0;
 }

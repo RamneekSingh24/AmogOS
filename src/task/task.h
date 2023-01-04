@@ -30,6 +30,8 @@ struct process;
 struct task {
     struct page_table_32b page_table;
 
+    uint8_t state;
+
     struct registers registers;
 
     struct process *proc;
@@ -48,6 +50,7 @@ int task_free(struct task *task);
 
 int task_switch(struct task *task);
 int task_switch_and_run(struct task *task);
+void task_switch_and_run_any();
 void task_run_init_task();
 
 // asm functions

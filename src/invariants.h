@@ -8,6 +8,13 @@ static bool kernel_mapped_in_user_va = true;
 static bool interrupt_handler_cli_always = true;
 static bool single_cpu = true;
 static bool kernel_uses_less_than_128mb_phy_adders = true;
+static bool single_task_per_process = true;
+
+static void assert_single_task_per_process() {
+    if (!single_task_per_process) {
+        panic("Using single task per process invariant");
+    }
+}
 
 static void assert_no_page_sharing() {
     if (!no_page_sharing) {

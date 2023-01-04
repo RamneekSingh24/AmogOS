@@ -11,17 +11,6 @@ enum {
     O_EXEC = 4,
 };
 
-static int add_vmem_block(struct process *proc, void *va_start, void *va_end) {
-    for (int i = 0; i < PROCESS_VMEM_MAX_BLOCKS; i++) {
-        if (proc->vmem_blocks_start[i] == 0) {
-            proc->vmem_blocks_start[i] = va_start;
-            proc->vmem_blocks_end[i] = va_end;
-            return i;
-        }
-    }
-    return -STATUS_OUT_OF_VMEM_BLOCKS;
-}
-
 // int mmap(void* va_start, void* va_end, int flags);
 // va_start and va_end must be page aligned
 void *syscall_mmap(struct interrupt_frame *frame) {
@@ -61,8 +50,8 @@ void *syscall_mmap(struct interrupt_frame *frame) {
     struct page_table_32b *pt = &task_current()->page_table;
 
     // add to task's memory regions
-    int block_idx =
-        add_vmem_block(task_current()->proc, va_start_aligned, va_end_aligned);
+    int block_idx = process_add_vmem_block(task_current()->proc,
+                                           va_start_aligned, va_end_aligned);
 
     if (block_idx < 0) {
         kfree(pa_start);
@@ -89,33 +78,5 @@ void *syscall_mmap(struct interrupt_frame *frame) {
 void *syscall_munmap(struct interrupt_frame *frame) {
     void *addr = task_get_stack_item(task_current(), 0);
 
-    struct page_table_32b *pt = &task_current()->page_table;
-
-    // find the memory region
-    int block_idx = -1;
-    for (int i = 0; i < PROCESS_VMEM_MAX_BLOCKS; i++) {
-        if (task_current()->proc->vmem_blocks_start[i] == addr) {
-            block_idx = i;
-            break;
-        }
-    }
-
-    if (block_idx < 0) {
-        return (void *)-STATUS_INVALID_MEMORY_REGION;
-    }
-
-    void *va_start = task_current()->proc->vmem_blocks_start[block_idx];
-    void *va_end = task_current()->proc->vmem_blocks_end[block_idx];
-
-    // unmap the memory region
-    int res = paging_free_va(pt, (uint32_t)va_start, (uint32_t)va_end);
-    if (res != STATUS_OK) {
-        return (void *)res;
-    }
-
-    // remove from task's memory regions
-    task_current()->proc->vmem_blocks_start[block_idx] = 0;
-    task_current()->proc->vmem_blocks_end[block_idx] = 0;
-
-    return STATUS_OK;
+    return (void *)process_free_vmem_block(task_current()->proc, addr);
 }

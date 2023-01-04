@@ -208,6 +208,9 @@ int paging_free_page_table(struct page_table_32b *pt) {
     }
     for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
         uint32_t pte = pt->cr3[i];
+        if (!(pte & PAGE_PRESENT)) {
+            continue;
+        }
         uint32_t *second_level_pt = (uint32_t *)(pte & PAGE_FRAME_LOC_MASK);
         kfree(second_level_pt);
     }

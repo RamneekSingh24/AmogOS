@@ -3,11 +3,13 @@
 section .asm
 
 global _start
-extern main
+extern main, exit
 
 section .asm
 _start:
     call main
+    push eax ; exit code
+    call exit
     ret
 
 

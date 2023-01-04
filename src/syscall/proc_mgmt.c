@@ -1,5 +1,7 @@
 #include "console/console.h"
 #include "idt/idt.h"
+#include "invariants.h"
+#include "memory/heap/kheap.h"
 #include "status.h"
 #include "task/process.h"
 #include "task/task.h"
@@ -17,7 +19,12 @@ static int _create_proccess(const char *file_path, int argc, int len,
     if (res != STATUS_OK) {
         return res;
     }
-    res = process_add_arguments(proc, argc, len, args);
+    process_set_parent_pid(proc, task_current()->proc->pid);
+
+    char *args_kspace = kzalloc(len);
+    copy_data_from_user(args_kspace, args, len);
+
+    res = process_add_arguments(proc, argc, len, args_kspace);
     if (res != STATUS_OK) {
         // TODO: free the process if the arguments are not added
         return res;
@@ -25,7 +32,7 @@ static int _create_proccess(const char *file_path, int argc, int len,
     // Artificially set the eax register to STATUS_OK
     // So that when the calling task is run again it will return STATUS_OK
     // This function though, will never return after task_switch_and_run
-    task_current()->registers.eax = STATUS_OK;
+    task_current()->registers.eax = proc->pid;
     task_switch_and_run(proc->task);
     // We never reach here
     return proc->pid;
@@ -38,4 +45,20 @@ void *syscall_create_process(struct interrupt_frame *frame) {
     int argc = (int)task_get_stack_item(task_current(), 2);
     char *file_path = (char *)task_get_stack_item(task_current(), 3);
     return (void *)_create_proccess(file_path, argc, len, args);
+}
+
+void *syscall_exit(struct interrupt_frame *frame) {
+    int status = (int)task_get_stack_item(task_current(), 0);
+    assert_single_task_per_process();
+    process_exit(task_current()->proc, status);
+
+    task_switch_and_run_any();
+
+    // We never return here
+    return (void *)0;
+}
+
+void *syscall_wait_pid(struct interrupt_frame *frame) {
+    int pid = (int)task_get_stack_item(task_current(), 0);
+    return (void *)process_waitpid(task_current()->proc, pid);
 }

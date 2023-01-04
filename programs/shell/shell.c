@@ -3,6 +3,11 @@
 #include "include/string.h"
 #include "include/unistd.h"
 
+void wait_pid_blocking(int pid) {
+    while (waitpid(pid) != 0) {
+    };
+}
+
 void shell(int argc, char **argv) {
     printf("Welcome to AmogOS, Sussy Baka\n");
     char buf[1024];
@@ -49,8 +54,12 @@ void shell(int argc, char **argv) {
             strcpy(FILE_PATH, "0:/");
             strncpy(FILE_PATH + 3, token, 120);
             int res = create_proccess(FILE_PATH, argc, len, buf);
-            if (res != 0) {
+            if (res < 0) {
                 printf("Command not found: %s\n", token);
+            } else {
+                // printf("Process created with pid=%d, waiting for it now\n",
+                //        res);
+                wait_pid_blocking(res);
             }
         }
     }

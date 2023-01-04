@@ -9,6 +9,8 @@ global mmap:function
 global munmap:function
 global cls:function
 global create_proccess:function
+global exit:function
+global waitpid:function
 
 ; void print(const char* str, int len)
 print:
@@ -103,6 +105,31 @@ create_proccess:
     mov eax, 7 ; create_proccess syscall 
     int 0x80
     add esp, 16 ; pop file_path, argc, len, args
+
+    pop ebp
+    ret
+
+;void exit(int status)
+exit:
+    push ebp
+    mov ebp, esp
+
+    push dword[ebp+8] ; status
+    mov eax, 8 ; exit syscall 
+    int 0x80
+    add esp, 4 ; pop status
+
+    pop ebp
+    ret
+
+waitpid:
+    push ebp
+    mov ebp, esp
+
+    push dword[ebp+8] ; pid
+    mov eax, 9 ; waitpid syscall 
+    int 0x80
+    add esp, 4 ; pop pid
 
     pop ebp
     ret

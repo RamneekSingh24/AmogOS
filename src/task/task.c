@@ -1,6 +1,7 @@
 #include "task.h"
 #include "config.h"
 #include "console/console.h"
+#include "invariants.h"
 #include "kernel.h"
 #include "loader/elfloader.h"
 #include "memory/heap/kheap.h"
@@ -36,6 +37,7 @@ int task_init(struct task *task, struct process *proc) {
     task->registers.cs = DEFAULT_USER_CODE_SEGMENT;
 
     task->proc = proc;
+    task->state = TASK_READY;
 
     return STATUS_OK;
 }
@@ -84,6 +86,9 @@ int task_free(struct task *task) {
     if (!task) {
         return 0;
     }
+    if (task->state != TASK_DEAD) {
+        panic("Trying to free a task that is not dead");
+    }
 
     paging_free_page_table(&task->page_table);
 
@@ -101,7 +106,7 @@ int task_free(struct task *task) {
         tasks_ll_tail = task->prev;
     }
     if (task == curr_task) {
-        curr_task = task_get_next();
+        curr_task = 0;
     }
 
     kfree(task);
@@ -109,7 +114,16 @@ int task_free(struct task *task) {
 }
 
 int task_switch(struct task *task) {
+    if (curr_task && curr_task->state == TASK_RUNNING) {
+        // set only if curr task exits and it is running
+        // other wise the task may be modified by other parts of the code
+        // or even be set to null
+        // for ex during exit, task state is set to dead
+        // during a blocking call, task state will be set to blocked
+        curr_task->state = TASK_READY;
+    }
     curr_task = task;
+    task->state = TASK_RUNNING;
     set_current_process(task->proc);
     // DESIGN INVARIANT: All the kernel memory is mapped(identity) into the task
     // page table So this is SAFE
@@ -118,16 +132,35 @@ int task_switch(struct task *task) {
 }
 
 int task_switch_and_run(struct task *task) {
+    if (task->state != TASK_READY) {
+        panic("Can't switch to a non ready task");
+    }
     task_switch(task);
     task_return(&task->registers);
     return 0;
 }
 
-// Run the init process
+void task_switch_and_run_any() {
+    assert_single_cpu();
+    assert_interrupt_handler_cli_always();
+
+    struct task *task = tasks_ll_head;
+    while (task) {
+        if (task->state == TASK_READY) {
+            task_switch_and_run(task);
+        }
+        task = task->next;
+    }
+    // if single cpu and cli then we are in a deadlock!
+    panic("Deadlock: No ready task found\n");
+}
+
+// Run the init process, and sets the parent pid to itself
 void task_run_init_task() {
     if (!tasks_ll_head) {
         panic("Can't start init task: no curr tasks exists\n");
     }
+    tasks_ll_head->proc->parent_pid = tasks_ll_head->proc->pid;
     task_switch_and_run(tasks_ll_head);
 }
 

@@ -5,6 +5,7 @@
 #include "kernel.h"
 #include "memory/memory.h"
 #include "status.h"
+#include "task/process.h"
 #include "task/task.h"
 
 // assembly wrappers for all the interrupt handlers
@@ -16,9 +17,7 @@ extern void *interrupt_handler_asm_wrappers[NUM_INTERRUPTS];
 static INTERRUPT_CALL_BACK interrupt_call_backs[NUM_INTERRUPTS];
 
 extern void idt_load(struct idt_ptr *ptr);
-extern void int0h();
 extern void int80h();
-extern void int_generic_h();
 extern void enable_interrupts();
 extern void disable_interrupts();
 
@@ -46,6 +45,11 @@ void push_cli() {
     }
 }
 
+void idt_handle_exception(struct interrupt_frame *frame) {
+    process_exit(task_current()->proc, -STATUS_PROC_EXCEPTION);
+    task_switch_and_run_any();
+}
+
 int idt_register_interrupt_call_back(int interrupt_no,
                                      INTERRUPT_CALL_BACK call_back) {
     if (interrupt_no < 0 || interrupt_no >= NUM_INTERRUPTS || !call_back) {
@@ -59,13 +63,15 @@ void interrupt_handler(int interrupt_no, struct interrupt_frame *frame) {
 
     // kernel_va_switch(); not needed kernel is already mapped
 
+    if (interrupt_no == 0xE) {
+        println("page fault");
+    }
+
     if (interrupt_call_backs[interrupt_no] != 0) {
         interrupt_call_backs[interrupt_no](frame);
     } else {
-        if (interrupt_no == 0xE) {
-            panic("page fault");
-        }
         // panic("Unhandled interrupt");
+        // TODO: check if we actually have to ack based on interrupt_no
         port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
     }
 
@@ -75,8 +81,6 @@ void interrupt_handler(int interrupt_no, struct interrupt_frame *frame) {
 
     // task_page(); // not needed as we are not switching to kernel page table
 }
-
-void intr_0_handler() { print("Divide by zero exception\n"); }
 
 void intr_21_handler() {
     print("Keyboard pressed\n");
@@ -164,7 +168,10 @@ void idt_init() {
         idt_set(i, interrupt_handler_asm_wrappers[i]);
     }
 
-    idt_set(0, int0h);
+    for (int i = 0; i < 0x20; i++) {
+        idt_register_interrupt_call_back(i, idt_handle_exception);
+    }
+
     idt_set(0x80, int80h);
 
     idt_load(&idtp);

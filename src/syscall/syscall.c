@@ -23,4 +23,6 @@ void register_syscalls() {
     syscall_register_command(SYS_CALL5_MUNMAP, syscall_munmap);
     syscall_register_command(SYS_CALL6_CLEAR_SCREEN, syscall_clear_screen);
     syscall_register_command(SYS_CALL7_CREATE_PROCESS, syscall_create_process);
+    syscall_register_command(SYS_CALL8_EXIT, syscall_exit);
+    syscall_register_command(SYS_CALL9_WAIT_PID, syscall_wait_pid);
 }

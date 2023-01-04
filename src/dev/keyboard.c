@@ -33,3 +33,18 @@ char keyboard_pop(struct task *task) {
     p->keyboard.head %= PROCESS_KEYBOARD_BUFFER_SIZE;
     return c;
 }
+
+void keyboard_set_capslock(struct keyboard *keyboard, int state) {
+    keyboard->caps_lock_state = state;
+}
+
+void keyboard_toggle_capslock(struct keyboard *keyboard) {
+    keyboard->caps_lock_state =
+        (keyboard->caps_lock_state == KEYBOARD_STATE_CAPS_ON)
+            ? KEYBOARD_STATE_CAPS_OFF
+            : KEYBOARD_STATE_CAPS_ON;
+}
+
+int keyboard_get_capslock(struct keyboard *keyboard) {
+    return keyboard->caps_lock_state;
+}
