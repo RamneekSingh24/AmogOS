@@ -108,7 +108,6 @@ void print_int(int x) {
 }
 
 void clear_screen() {
-    println("Clearing screen...");
     for (int y = 0; y < VGA_HEIGHT; y++) {
         for (int x = 0; x < VGA_WIDTH; x++) {
             video_mem[VGA_WIDTH * y + x] = make_char(' ', 0);

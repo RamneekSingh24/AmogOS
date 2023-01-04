@@ -36,6 +36,8 @@ int task_init(struct task *task, struct process *proc) {
     task->registers.esp = DEFAULT_USER_STACK_START;
     task->registers.cs = DEFAULT_USER_CODE_SEGMENT;
 
+    task->registers.eflags = 0b1000000010; // Reserved bit + IF set
+
     task->proc = proc;
     task->state = TASK_READY;
 
@@ -213,6 +215,27 @@ void *task_get_stack_item(struct task *task, int index) {
         return 0;
     }
     return (void *)item;
+}
+
+void task_switch_to_next_and_run() {
+    struct task *start = task_current();
+    if (!start) {
+        panic("No curr task");
+    }
+    if (start->state == TASK_RUNNING) {
+        // set to ready only if it was running
+        start->state = TASK_READY;
+    }
+
+    struct task *next = task_get_next();
+    while (next != start) {
+        if (next->state == TASK_READY) {
+            break;
+        }
+        next = task_get_next();
+    }
+
+    task_switch_and_run(next);
 }
 
 // NOT USED

@@ -25,16 +25,11 @@ static int _create_proccess(const char *file_path, int argc, int len,
     copy_data_from_user(args_kspace, args, len);
 
     res = process_add_arguments(proc, argc, len, args_kspace);
+    kfree(args_kspace);
     if (res != STATUS_OK) {
         // TODO: free the process if the arguments are not added
         return res;
     }
-    // Artificially set the eax register to STATUS_OK
-    // So that when the calling task is run again it will return STATUS_OK
-    // This function though, will never return after task_switch_and_run
-    task_current()->registers.eax = proc->pid;
-    task_switch_and_run(proc->task);
-    // We never reach here
     return proc->pid;
 }
 

@@ -8,6 +8,8 @@
 #include "task/process.h"
 #include "task/task.h"
 
+// https://www.felixcloutier.com/x86/iret:iretd:iretq
+
 // assembly wrappers for all the interrupt handlers
 // NOTE: some of these such as sys_call(0x80) are overridden
 extern void *interrupt_handler_asm_wrappers[NUM_INTERRUPTS];
@@ -46,8 +48,17 @@ void push_cli() {
 }
 
 void idt_handle_exception(struct interrupt_frame *frame) {
+    task_save_current_state(frame);
     process_exit(task_current()->proc, -STATUS_PROC_EXCEPTION);
     task_switch_and_run_any();
+}
+
+void idt_handle_clock(struct interrupt_frame *frame) {
+    task_save_current_state(frame);
+    // ack the clock
+    port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
+    // run next task
+    task_switch_to_next_and_run();
 }
 
 int idt_register_interrupt_call_back(int interrupt_no,
@@ -64,7 +75,7 @@ void interrupt_handler(int interrupt_no, struct interrupt_frame *frame) {
     // kernel_va_switch(); not needed kernel is already mapped
 
     if (interrupt_no == 0xE) {
-        println("page fault");
+        println("[OS Warning] page fault.. maybe a bug in code");
     }
 
     if (interrupt_call_backs[interrupt_no] != 0) {
@@ -80,11 +91,6 @@ void interrupt_handler(int interrupt_no, struct interrupt_frame *frame) {
     // to another task port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
 
     // task_page(); // not needed as we are not switching to kernel page table
-}
-
-void intr_21_handler() {
-    print("Keyboard pressed\n");
-    port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
 }
 
 static SYSCALL_HANDLER sys_calls[NUM_SYS_CALLS];
@@ -168,11 +174,14 @@ void idt_init() {
         idt_set(i, interrupt_handler_asm_wrappers[i]);
     }
 
+    idt_set(0x80, int80h);
+
+    // Use idt_register_interrupt_call_back below this
     for (int i = 0; i < 0x20; i++) {
         idt_register_interrupt_call_back(i, idt_handle_exception);
     }
 
-    idt_set(0x80, int80h);
+    idt_register_interrupt_call_back(0x20, idt_handle_clock);
 
     idt_load(&idtp);
 }

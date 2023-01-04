@@ -10,23 +10,20 @@ task_return:
     mov ebp, esp
     ; PUSH THE DATA SEGMENT (SS WILL BE FINE)
     ; PUSH THE STACK ADDRESS
-    ; PUSH THE FLAGS
+    ; PUSH THE EFLAGS
     ; PUSH THE CODE SEGMENT
     ; PUSH IP
     ; iret will return from here and use these pushed values
 
-    ; Let's access the structure passed to us
+    ; load the regs structure passed to us
     mov ebx, [ebp+4]
     ; push the data/stack selector
     push dword [ebx+44]
     ; Push the stack pointer
     push dword [ebx+40]
 
-    ; Push the flags
-    pushf
-    pop eax
-    or eax, 0x200
-    push eax
+    ; Push the eflags
+    push dword [ebx+36]
 
     ; Push the code segment
     push dword [ebx+32]
@@ -41,9 +38,9 @@ task_return:
     mov fs, ax
     mov gs, ax
 
-    push dword [ebp+4]
+    push dword [ebp+4] ; push arg
     call restore_general_purpose_registers
-    add esp, 4
+    add esp, 4 ; pop arg without polluting other registers
 
     ; Let's leave kernel land and execute in user land!
     iretd

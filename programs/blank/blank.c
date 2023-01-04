@@ -1,5 +1,6 @@
 #include "include/stdio.h"
 #include "include/stdlib.h"
+#include "include/string.h"
 
 void screen() {
     printf("Yo %d\n", 123);
@@ -45,6 +46,20 @@ void screen() {
 }
 
 int main(int argc, char **argv) {
+
+    if (argc >= 2 && strncmp(argv[1], "showmt", 5) == 0) {
+        int i = 0;
+        while (1) {
+            i++;
+            if (i % 30000000 == 0) {
+                printf("i=%d\n", i);
+            }
+            if (i < 0 || i > 30000000 * 8) {
+                return 0;
+            }
+        }
+    }
+
     print("Greetings! you started blank.c and passed the args listed below\n",
           100);
 

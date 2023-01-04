@@ -51,6 +51,7 @@ int task_free(struct task *task);
 int task_switch(struct task *task);
 int task_switch_and_run(struct task *task);
 void task_switch_and_run_any();
+void task_switch_to_next_and_run();
 void task_run_init_task();
 
 // asm functions

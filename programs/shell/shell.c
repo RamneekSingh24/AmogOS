@@ -14,6 +14,9 @@ void shell(int argc, char **argv) {
     while (1) {
         print("> ", 10);
         readline_terminal(buf, 100);
+        if (strlen(buf) == 0) {
+            continue;
+        }
         if (istrncmp(buf, "clear", 5) == 0) {
             cls();
         } else if (istrncmp(buf, "tok", 3) == 0) {
@@ -30,6 +33,18 @@ void shell(int argc, char **argv) {
             printf("argv: %p\n", argv);
             for (int i = 0; i < argc; i++) {
                 printf("argv[%d]:  %s\n", i, argv[i]);
+            }
+        } else if (istrncmp(buf, "showmt", 6) == 0) {
+            cls();
+            printf("Showing multi tasking capabilities: Launching two procs "
+                   "that print to screen counting upwards\n");
+            int p1 = create_proccess("0:/blank", 2, 16, "0:/blank\0showmt\0");
+            int p2 = create_proccess("0:/blank", 2, 16, "0:/blank\0showmt\0");
+            if (p1 >= 0) {
+                wait_pid_blocking(p1);
+            }
+            if (p2 >= 0) {
+                wait_pid_blocking(p2);
             }
         } else {
             // start a process from the input
