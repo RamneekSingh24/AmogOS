@@ -19,6 +19,15 @@ FILES += ./build/task/task.o
 FILES += ./build/task/tss.asm.o
 FILES += ./build/task/process.o
 FILES += ./build/task/task.asm.o 
+FILES += ./build/syscall/syscall.o
+FILES += ./build/syscall/user_io.o
+FILES += ./build/syscall/umem.o
+FILES += ./build/syscall/proc_mgmt.o
+FILES += ./build/dev/keyboard.o
+FILES += ./build/dev/ps2.o
+FILES += ./build/loader/elf.o
+FILES += ./build/loader/elfloader.o
+
 
 
 INCLUDES = -I./src
@@ -29,7 +38,7 @@ build: ${FILES}
 	./build.sh
 
 format:
-	find ./src -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
+	find ./ -iname *.h -o -iname *.c | xargs clang-format -style={"IndentWidth: 4}" -i
 
 builddir:
 	mkdir -p ./bin
@@ -48,7 +57,29 @@ builddir:
 	mkdir -p ./build/disk
 	mkdir -p ./build/gdt
 	mkdir -p ./build/task
-	mkdir -p ./programs/build
+	mkdir -p ./build/syscall
+	mkdir -p ./build/dev
+	mkdir -p ./build/loader
+	mkdir -p ./programs/blank/build
+	mkdir -p ./programs/shell/build
+	mkdir -p ./programs/stdlib/build
+
+
+detected_OS := $(shell uname)
+MKFS := 
+GCC := 
+ifeq ($(detected_OS),Darwin)        
+    MKFS += mkfs_macos
+	GCC += /opt/homebrew/Cellar/gcc/12.2.0/bin/gcc-12
+endif
+ifeq ($(detected_OS),Linux)
+    MKFS += mkfs_linux
+	GCC += gcc
+endif
+
+compile_commands: CC=${GCC}
+compile_commands: LD=ld
+compile_commands: ./bin/boot.bin ${FILES}
 
 lint:
 	make builddir
@@ -57,9 +88,26 @@ lint:
 	find ./src -iname *.h -o -iname *.c | xargs clang-tidy -header-filter=.* -system-headers
 	make clean
 
-compile_commands: CC=gcc
-compile_commands: LD=ld
-compile_commands: ./bin/boot.bin ${FILES}
+
+
+
+
+mkfs_linux: ./bin/boot.bin ./bin/kernel.bin user_programs
+	sudo mount -t vfat ./bin/os.bin /mnt/d
+	sudo cp ./hello.txt /mnt/d
+	sudo cp ./programs/blank/blank.elf /mnt/d/blank
+	sudo cp ./programs/shell/shell.elf /mnt/d/shell
+	sudo umount /mnt/d
+
+make macos_setup:
+	python3 -m venv .venv
+	source .venv/bin/activate && pip3 install -r pyfatfs
+
+mkfs_macos:
+	source .venv/bin/activate && python3 mkfs.py
+
+
+
 
 
 all: ./bin/boot.bin ./bin/kernel.bin user_programs
@@ -67,14 +115,13 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	dd if=./bin/boot.bin >> ./bin/os.bin
 	dd if=./bin/kernel.bin >> ./bin/os.bin
 	dd if=/dev/zero bs=10485760 count=16 >> ./bin/os.bin
-	sudo mount -t vfat ./bin/os.bin /mnt/d
-	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/blank/blank.bin /mnt/d
-	sudo umount /mnt/d
+	make ${MKFS}
 
 make qemu: 
 	./build.sh
 	qemu-system-i386 -hda ./bin/os.bin
+	# qemu-system-x86_64 -hda ./bin/os.bin works too due to backwards compatibility
+
 
 
 ./bin/kernel.bin: $(FILES)
@@ -164,13 +211,43 @@ make qemu:
 	${CC} -I./src/task ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/task/process.c -o ./build/task/process.o
 
 
+./build/syscall/syscall.o: ./src/syscall/syscall.c
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/syscall.c -o ./build/syscall/syscall.o
+
+./build/syscall/user_io.o: ./src/syscall/user_io.c
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/user_io.c -o ./build/syscall/user_io.o
+
+./build/dev/keyboard.o: ./src/dev/keyboard.c
+	${CC} -I./src/dev ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/dev/keyboard.c -o ./build/dev/keyboard.o
+
+./build/dev/ps2.o: ./src/dev/ps2.c
+	${CC} -I./src/dev ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/dev/ps2.c -o ./build/dev/ps2.o
+
+
+./build/loader/elf.o: ./src/loader/elf.c
+	${CC} -I./src/loader ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/loader/elf.c -o ./build/loader/elf.o
+
+./build/loader/elfloader.o: ./src/loader/elfloader.c
+	${CC} -I./src/loader ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/loader/elfloader.c -o ./build/loader/elfloader.o
+
+./build/syscall/umem.o:
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/umem.c -o ./build/syscall/umem.o
+
+./build/syscall/proc_mgmt.o:
+	${CC} -I./src/syscall ${INCLUDES} ${FLAGS} -std=gnu99 -c ./src/syscall/proc_mgmt.c -o ./build/syscall/proc_mgmt.o
+
+
 user_programs:
+	cd ./programs/stdlib && make all
 	cd ./programs/blank && make all
+	cd ./programs/shell && make all
 
 user_programs_clean:
+	cd ./programs/stdlib && make clean
 	cd ./programs/blank && make clean
+	cd ./programs/shell && make clean
 
-clean: user_programs_clean
+clean: user_programs_clean 
 	rm -rf ./bin/boot.bin ./bin/kernel.bin ./bin/os.bin ${FILES} ./build/kernelfull.o
 
 

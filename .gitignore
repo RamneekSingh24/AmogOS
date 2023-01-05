@@ -11,3 +11,4 @@ bs=*
 compile_commands.json
 *.bin
 *.elf
+.venv

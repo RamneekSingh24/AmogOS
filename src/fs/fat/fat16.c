@@ -216,11 +216,13 @@ static int fat16_load_root_dir(struct disk *disk,
     struct disk_stream *stream = fat_private->dir_stream;
     res = disk_stream_seek(stream, root_dir_start_sec * disk->sector_size);
     if (res != STATUS_OK) {
+        kfree(dir_entries);
         goto out;
     }
 
     res = disk_stream_read(stream, dir_entries, root_dir_size);
     if (res != STATUS_OK) {
+        kfree(dir_entries);
         goto out;
     }
 

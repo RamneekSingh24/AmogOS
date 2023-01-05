@@ -3,7 +3,11 @@
 #define TASK_H
 
 #include "config.h"
+#include "idt/idt.h"
 #include "memory/paging/paging.h"
+#include <stdbool.h>
+
+enum { TASK_RUNNING, TASK_BLOCKED, TASK_READY, TASK_DEAD };
 
 struct registers {
     uint32_t edi;
@@ -26,6 +30,8 @@ struct process;
 struct task {
     struct page_table_32b page_table;
 
+    uint8_t state;
+
     struct registers registers;
 
     struct process *proc;
@@ -33,6 +39,8 @@ struct task {
     struct task *next;
 
     struct task *prev;
+
+    void *kstack;
 };
 
 struct task *task_new(struct process *proc);
@@ -41,11 +49,21 @@ struct task *task_get_next();
 int task_free(struct task *task);
 
 int task_switch(struct task *task);
-int task_page();
+int task_switch_and_run(struct task *task);
+void task_switch_and_run_any();
+void task_switch_to_next_and_run();
 void task_run_init_task();
 
 // asm functions
 void task_return(struct registers *regs);
 void restore_general_purpose_registers(struct registers *regs);
 void user_registers();
+void task_save_current_state(struct interrupt_frame *frame);
+int copy_data_from_user(void *dst, void *src, uint32_t nbytes);
+void *task_get_stack_item(struct task *task, int index);
+
+int verify_user_pointer(void *ptr);
+
+// int task_page(); NOT USED
+
 #endif

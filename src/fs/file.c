@@ -102,6 +102,7 @@ static FILE_MODE parse_mode(const char *mode) {
     return FILE_MODE_INVALID;
 }
 
+// returns the File Descriptor (>= 1), or < 0 on error
 int kfopen(const char *filename, const char *mode_str) {
     int res = 0;
 

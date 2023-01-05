@@ -2,27 +2,38 @@
 #include "config.h"
 #include "console/console.h"
 #include "io/io.h"
+#include "kernel.h"
 #include "memory/memory.h"
+#include "status.h"
+#include "task/process.h"
+#include "task/task.h"
+
+// https://www.felixcloutier.com/x86/iret:iretd:iretq
+
+// assembly wrappers for all the interrupt handlers
+// NOTE: some of these such as sys_call(0x80) are overridden
+extern void *interrupt_handler_asm_wrappers[NUM_INTERRUPTS];
+
+// NOTE: some of these such as sys_call(0x80) are overridden and not used from
+// here
+static INTERRUPT_CALL_BACK interrupt_call_backs[NUM_INTERRUPTS];
 
 extern void idt_load(struct idt_ptr *ptr);
-extern void int0h();
-extern void int21h();
-extern void int_generic_h();
+extern void int80h();
 extern void enable_interrupts();
 extern void disable_interrupts();
 
 struct idt_entry idt[NUM_INTERRUPTS];
 struct idt_ptr idtp;
 
-int cli_count;
+volatile int cli_count;
 
 void pop_cli() {
     if (cli_count <= 0) {
         println("error pop cli with count already <= 0");
     } else {
         cli_count--;
-        if (cli_count == 0)
-            disable_interrupts();
+        disable_interrupts();
     }
 }
 
@@ -36,11 +47,99 @@ void push_cli() {
     }
 }
 
-void intr_0_handler() { print("Divide by zero exception\n"); }
+void idt_handle_exception(struct interrupt_frame *frame) {
+    task_save_current_state(frame);
+    process_exit(task_current()->proc, -STATUS_PROC_EXCEPTION);
+    task_switch_and_run_any();
+}
 
-void intr_21_handler() {
-    print("Keyboard pressed\n");
+void idt_handle_clock(struct interrupt_frame *frame) {
+    task_save_current_state(frame);
+    // ack the clock
     port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
+    // run next task
+    task_switch_to_next_and_run();
+}
+
+int idt_register_interrupt_call_back(int interrupt_no,
+                                     INTERRUPT_CALL_BACK call_back) {
+    if (interrupt_no < 0 || interrupt_no >= NUM_INTERRUPTS || !call_back) {
+        return -STATUS_INVALID_ARG;
+    }
+    interrupt_call_backs[interrupt_no] = call_back;
+    return 0;
+}
+
+void interrupt_handler(int interrupt_no, struct interrupt_frame *frame) {
+
+    // kernel_va_switch(); not needed kernel is already mapped
+
+    if (interrupt_no == 0xE) {
+        println("[OS Warning] page fault.. maybe a bug in code");
+    }
+
+    if (interrupt_call_backs[interrupt_no] != 0) {
+        interrupt_call_backs[interrupt_no](frame);
+    } else {
+        // panic("Unhandled interrupt");
+        // TODO: check if we actually have to ack based on interrupt_no
+        port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
+    }
+
+    // DESIGN NOTE: interrupt call backs should be responsible for acking the
+    // interrupt We may never get back here in time as the callback may switch
+    // to another task port_io_out_byte(MASTER_PIC_PORT, MASTER_PIC_INTR_ACK);
+
+    // task_page(); // not needed as we are not switching to kernel page table
+}
+
+static SYSCALL_HANDLER sys_calls[NUM_SYS_CALLS];
+
+void *syscall_handle_command(int command, struct interrupt_frame *frame) {
+    if (command < 0 || command >= NUM_SYS_CALLS) {
+        return (void *)-SYSCALL_NOT_IMPLEMENTED;
+    }
+
+    SYSCALL_HANDLER sys_call = sys_calls[command];
+    if (!sys_call) {
+        return (void *)-SYSCALL_NOT_IMPLEMENTED;
+    }
+
+    return sys_call(frame);
+}
+
+void syscall_register_command(int command_num, SYSCALL_HANDLER handler) {
+    if (command_num < 0 || command_num >= NUM_SYS_CALLS) {
+        panic("couldn't register syscall");
+    }
+    if (sys_calls[command_num]) {
+        panic("syscall command number already in use");
+    }
+    sys_calls[command_num] = handler;
+}
+
+void *intr_80h_handler(int command, struct interrupt_frame *frame) {
+    void *res = 0;
+
+    // DESIGN NOTE:
+    // This will switch to the kernel segments(privliged) and then to the kernel
+    // page table Switching to kernel pape table is not actually needed because
+    // the kernel is already mapped in the user page table. User Memory layout:
+    //  Everything mapped identically to phyiscal memory
+    //  Except for addresses above "config.h/KHEAP_SAFE_BOUNDARY"
+    //  Addresses above this will be accessable by the user space.
+    //  All the kernel space is mapping to <= KHEAP_SAFE_BOUNDARY
+    // NOTE: kernel_va_switch changed to not load kernel's cr3 for now
+    // kernel_va_switch();
+
+    task_save_current_state(frame);
+
+    res = syscall_handle_command(command, frame);
+
+    // Get back to the user land pages
+    // task_page();
+
+    return res;
 }
 
 void intr_generic_handler() {
@@ -63,18 +162,26 @@ void idt_set(int intr_num, void *addr) {
 
 void idt_init() {
 
-    memset(&idt, 0, sizeof(idt));
+    memset(idt, 0, sizeof(idt));
+    memset(sys_calls, 0, sizeof(sys_calls));
+    memset(interrupt_call_backs, 0, sizeof(interrupt_call_backs));
     idtp.limit = sizeof(idt) - 1;
     idtp.base = (uint32_t)&idt;
 
     cli_count = 0;
 
     for (int i = 0; i < NUM_INTERRUPTS; i++) {
-        idt_set(i, int_generic_h);
+        idt_set(i, interrupt_handler_asm_wrappers[i]);
     }
 
-    idt_set(0, int0h);
-    idt_set(0x21, int21h);
+    idt_set(0x80, int80h);
+
+    // Use idt_register_interrupt_call_back below this
+    for (int i = 0; i < 0x20; i++) {
+        idt_register_interrupt_call_back(i, idt_handle_exception);
+    }
+
+    idt_register_interrupt_call_back(0x20, idt_handle_clock);
 
     idt_load(&idtp);
 }
@@ -88,10 +195,7 @@ static void test_div_by_zero() { test_div0(); }
 
 static void test_div_by_zero_int0() { test_int0(); }
 
-void external_interrupts_test() {
-    enable_interrupts();
-    idt_set(0x20, int21h);
-}
+void external_interrupts_test() { enable_interrupts(); }
 
 void idt_test() {
     test_div_by_zero_int0();

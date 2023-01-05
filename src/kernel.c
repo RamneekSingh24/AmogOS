@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "config.h"
 #include "console/console.h"
+#include "dev/keyboard.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
 #include "fs/file.h"
@@ -11,6 +12,7 @@
 #include "memory/memory.h"
 #include "memory/paging/paging.h"
 #include "status.h"
+#include "syscall/syscall.h"
 #include "task/process.h"
 #include "task/tss.h"
 
@@ -41,11 +43,21 @@ void tss_init() {
 }
 
 void gdt_init() {
-    // Set the addr of tss, don't which couldn't be set a compile time
+    // Set the addr of tss, which couldn't be set at compile time
     gdt_structured[TOTAL_GDT_SEGS - 1].base = (uint32_t)&tss;
     memset(gdt_real, 0x00, sizeof(gdt_real));
     gdt_structured_to_gdt(gdt_real, gdt_structured, TOTAL_GDT_SEGS);
     gdt_load(gdt_real, sizeof(gdt_real));
+}
+
+void kernel_registers();
+
+// Switches to kernel privlidged segments
+// DOES NOT SWITCH PAGE TABLES
+void kernel_va_switch() {
+    kernel_registers();
+    // DESIGN NOTE: No need to load kernel page table here, kernel is already
+    // mapped paging_load_kernel_page_table();
 }
 
 void kernel_main() {
@@ -59,15 +71,22 @@ void kernel_main() {
     disk_init();
     idt_init();
     procs_init();
+    keyboard_init();
+    register_syscalls();
 
-    println("Starting first proc..");
+    println("Loading first proc..");
 
     struct process *proc = 0;
-    int res = process_new("0:/blank.bin", &proc);
+    int res = process_new("0:/shell", &proc);
     if (res != STATUS_OK) {
+        print("Err code: ");
         print_int(res);
-        panic("\nFailed to load blank.bin");
+        panic("\nFailed to load shell");
     }
+
+    process_add_arguments(proc, 3, 22, "0:/shell\0Amogos\0Shell\0");
+
+    println("Loading success! Starting first proc..");
 
     task_run_init_task();
 

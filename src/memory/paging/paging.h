@@ -25,11 +25,12 @@ struct page_table_32b {
 };
 
 void kpaging_init();
-
+void paging_load_kernel_page_table();
 int paging_create_4gb_page_tables(uint8_t flags, struct page_table_32b *pt);
 int paging_free_page_table(struct page_table_32b *table_table);
 void paging_switch(struct page_table_32b *pt);
 
+void *paging_down_align_addr(void *addr);
 void *paging_up_align_addr(void *addr);
 
 int paging_map_memory_region(struct page_table_32b *pt, void *data_va_start,
@@ -37,5 +38,8 @@ int paging_map_memory_region(struct page_table_32b *pt, void *data_va_start,
                              uint8_t flags);
 
 void test_paging_set();
+
+int paging_free_va(struct page_table_32b *pt, uint32_t vaddr_start,
+                   uint32_t vaddr_end);
 
 #endif
