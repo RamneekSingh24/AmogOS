@@ -9,6 +9,13 @@ static bool interrupt_handler_cli_always = true;
 static bool single_cpu = true;
 static bool kernel_uses_less_than_128mb_phy_adders = true;
 static bool single_task_per_process = true;
+static bool kmalloc_returns_page_aligned_memory = true;
+
+static void assert_kmalloc_returns_page_aligned_memory() {
+    if (!kmalloc_returns_page_aligned_memory) {
+        panic("Using kmalloc returns page aligned memory invariant");
+    }
+}
 
 static void assert_single_task_per_process() {
     if (!single_task_per_process) {
