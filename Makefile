@@ -99,9 +99,9 @@ mkfs_linux: ./bin/boot.bin ./bin/kernel.bin user_programs
 	sudo cp ./programs/shell/shell.elf /mnt/d/shell
 	sudo umount /mnt/d
 
-make macos_setup:
+macos_setup:
 	python3 -m venv .venv
-	source .venv/bin/activate && pip3 install -r pyfatfs
+	source .venv/bin/activate && pip3 install pyfatfs
 
 mkfs_macos:
 	source .venv/bin/activate && python3 mkfs.py
